@@ -1,0 +1,6 @@
+@HistoryQuest.Api_HostAddress = http://localhost:5007
+
+GET {{HistoryQuest.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
