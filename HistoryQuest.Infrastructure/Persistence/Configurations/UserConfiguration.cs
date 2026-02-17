@@ -15,8 +15,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Email).IsRequired().HasMaxLength(100);
         builder.Property(x => x.PasswordHash).IsRequired();
 
-        builder.HasIndex(x => x.UserName).IsUnique();
-        builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.UserName)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
+        builder.HasIndex(x => x.Email)
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
 
         builder.HasMany(x => x.Roles)
             .WithOne(x => x.User)

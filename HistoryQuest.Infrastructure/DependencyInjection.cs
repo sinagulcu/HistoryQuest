@@ -1,6 +1,9 @@
 ﻿
 
 using HistoryQuest.Application.Auth.Interfaces;
+using HistoryQuest.Application.Auth.UseCases;
+using HistoryQuest.Application.Questions.Interfaces;
+using HistoryQuest.Application.Questions.UseCases;
 using HistoryQuest.Infrastructure.Persistence;
 using HistoryQuest.Infrastructure.Repositories;
 using HistoryQuest.Infrastructure.Security;
@@ -22,6 +25,13 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IQuestionRepository, QuestionRepository>();
+        services.AddScoped<CreateQuestionCommand>();
+        services.AddScoped<RegisterTeacherCommand>();
+        services.AddScoped<DeleteUserCommand>();
+        services.AddScoped<GetQuestionByIdQuery>();
+        services.AddScoped<GetMyQuestionsQuery>();
+        services.AddScoped<UpdateQuestionCommand>();
 
         return services;
     }
