@@ -1,5 +1,9 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using HistoryQuest.Api.Middleware;
 using HistoryQuest.Application.Auth.UseCases;
 using HistoryQuest.Infrastructure;
+using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
@@ -8,7 +12,12 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -43,6 +52,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserCommand>();
+builder.Services.AddFluentValidationAutoValidation();
 
 builder.Services.AddScoped<RegisterUserCommand>();
 builder.Services.AddScoped<LoginUserQuery>();
@@ -84,9 +96,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+await DataSeeder.SeedAdminAsync(app.Services);
 
 app.Run();
