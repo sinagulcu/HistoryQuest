@@ -1,6 +1,7 @@
 ﻿
 
 using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Exceptions;
 
 namespace HistoryQuest.Domain.Entities;
 
@@ -16,7 +17,7 @@ public class Question
 
     public string? Explanation { get; private set; }
 
-    public ICollection<QuestionOption> Options { get; private set; } = [];
+    public List<QuestionOption> Options { get; private set; } = [];
 
     protected Question(
         string text,
@@ -46,51 +47,58 @@ public class Question
         string text,
         QuestionDifficulty difficulty,
         string? explanation,
-        List<(Guid? Id, string Text, bool IsCorrect)> updatedOptions)
+        List<UpdateQuestionOptionRequest> updatedOptions)
     {
         Text = text;
         Difficulty = difficulty;
         Explanation = explanation;
-
-        var correctCount = updatedOptions.Count(o => o.IsCorrect);
-
-        if (correctCount == 0)
-            throw new InvalidOperationException("At least one option must be correct.");
-        if (Type == QuestionType.SingleChoice && correctCount > 1)
-            throw new InvalidOperationException("Single choice question can have only one correct answer.");
-
-
-        var optionIds = updatedOptions.Where(o => o.Id.HasValue).Select(o => o.Id!.Value).ToList();
-
-
-        var toRemove = Options.Where(o => !optionIds.Contains(o.Id)).ToList();
-        foreach (var option in toRemove)
-        {
-            Options.Remove(option);
-        }
 
         foreach (var dto in updatedOptions)
         {
             if (dto.Id.HasValue)
             {
                 var existing = Options.FirstOrDefault(o => o.Id == dto.Id.Value);
+
                 if (existing == null)
-                    throw new InvalidOperationException("Option not found or does not belong to this question.");
+                    throw new NotFoundException($"Option with ID {dto.Id.Value} not found.");
 
                 existing.Update(dto.Text, dto.IsCorrect);
             }
             else
-            {
                 Options.Add(new QuestionOption(dto.Text, dto.IsCorrect));
-            }
+
+            var idsFromRequest = updatedOptions
+                .Select(o => o.Id)
+                .OfType<Guid>()
+                .ToList();
+
+            var toDelete = Options
+                .Where(o => !idsFromRequest.Contains(o.Id))
+                .ToList();
+
+            foreach (var option in toDelete)
+                Options.Remove(option);
+
+            ValidateSingleCorrectOption();
         }
     }
 
     public void AddOption(string text, bool isCorrect)
     {
         if (Type == QuestionType.SingleChoice && Options.Any(o => o.IsCorrect) && isCorrect)
-            throw new InvalidOperationException("Single choice question can have only one correct answer.");
+            throw new BusinessRuleException("Single choice question can have only one correct answer.");
 
         Options.Add(new QuestionOption(text, isCorrect));
     }
+
+    private void ValidateSingleCorrectOption()
+    {
+        if (Options.Count(o => o.IsCorrect) != 1)
+            throw new BusinessRuleException("Question must have exactly one correct option.");
+    }
+
+    public record UpdateQuestionOptionRequest(
+        Guid? Id,
+        string Text,
+        bool IsCorrect);
 }

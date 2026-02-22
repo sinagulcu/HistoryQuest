@@ -10,6 +10,8 @@ public class User : BaseEntity
 
     private readonly List<UserRole> _roles  = new();
     public IReadOnlyCollection<UserRole> Roles  => _roles;
+    private readonly List<RefreshToken> _refreshTokens = new();
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
 
     protected User() {}
 
@@ -28,5 +30,10 @@ public class User : BaseEntity
             return;
 
         _roles.Add(new UserRole(this, role));
+    }
+
+    public void AddRefreshToken(RefreshToken refreshToken)
+        {
+            _refreshTokens.Add(refreshToken);
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace HistoryQuest.Infrastructure.Security;
@@ -46,4 +47,10 @@ public class JwtTokenService : ITokenService
 
     public DateTime GetExpiration()
         => DateTime.UtcNow.AddMinutes(60);
+
+    public string GenerateRefreshToken()
+    {
+        var randomBytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(randomBytes);
+    }
 }

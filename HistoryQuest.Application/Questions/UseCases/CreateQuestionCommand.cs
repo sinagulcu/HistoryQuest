@@ -4,6 +4,7 @@ using HistoryQuest.Application.Questions.DTOs;
 using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Exceptions;
 
 namespace HistoryQuest.Application.Questions.UseCases;
 
@@ -20,10 +21,10 @@ public class CreateQuestionCommand
         Guid teacherId)
     {
         if (request.Options.Count < 2)
-            throw new Exception("Question must have at least 2 option.");
+            throw new BusinessRuleException("Question must have at least 2 option.");
 
         if (request.Options.Count(o => o.IsCorrect) != 1)
-            throw new Exception("Question must have exactly one correct option.");
+            throw new BusinessRuleException("Question must have exactly one correct option.");
 
         var question = Question.Create(
             request.Text,

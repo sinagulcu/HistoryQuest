@@ -3,6 +3,8 @@ using HistoryQuest.Application.Auth.DTOs;
 using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Exceptions;
+using System.Data;
 
 namespace HistoryQuest.Application.Auth.UseCases;
 
@@ -22,10 +24,10 @@ public class RegisterTeacherCommand
     public async Task<AuthResult> ExecuteAsync(RegisterRequest request)
     {
         if (await _userRepository.GetByUserNameAsync(request.UserName) != null)
-            throw new Exception("Username already exists.");
+            throw new ConflictException("Username already exists.");
 
         if(await _userRepository.GetByEmailAsync(request.Email) != null)
-            throw new Exception("Email already exists.");
+            throw new ConflictException("Email already exists.");
 
         var passwordHash = _passwordHasher.Hash(request.Password);
 

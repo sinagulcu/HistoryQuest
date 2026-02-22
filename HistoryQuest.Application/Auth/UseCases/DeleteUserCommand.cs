@@ -1,5 +1,6 @@
 ﻿
 using HistoryQuest.Application.Auth.Interfaces;
+using HistoryQuest.Domain.Exceptions;
 
 namespace HistoryQuest.Application.Auth.UseCases;
 
@@ -17,7 +18,7 @@ public class DeleteUserCommand
         var user = await _userRepository.GetByIdAsync(userId);
 
         if(user == null)
-            throw new Exception("User not found.");
+            throw new NotFoundException("User not found.");
 
         user.MarkAsDeleted();
 

@@ -1,6 +1,7 @@
 ﻿
 using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Domain.Entities;
+using HistoryQuest.Domain.Enums;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,7 +47,12 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user)
     {
-        _context.Users.Update(user);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> AnyUserInRoleAsync(UserRoleType roleType)
+    {
+        return await _context.Users
+            .AnyAsync(u => u.Roles.Any(r => r.Role.RoleType == roleType));
     }
 }

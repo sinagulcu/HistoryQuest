@@ -1,6 +1,7 @@
 ﻿
 using HistoryQuest.Application.Questions.DTOs;
 using HistoryQuest.Application.Questions.Interfaces;
+using HistoryQuest.Domain.Entities;
 
 namespace HistoryQuest.Application.Questions.UseCases;
 
@@ -26,12 +27,15 @@ public class UpdateQuestionCommand
         if (question.CreatedByTeacherId != teacherId)
             throw new UnauthorizedAccessException("You cannot update this question.");
         var mappedOptions = request.Options
-            .Select(o=>(o.Id,o.Text,o.IsCorrect))
+            .Select(o => new Question.UpdateQuestionOptionRequest(
+                o.Id,
+                o.Text,
+                o.IsCorrect))
             .ToList();
 
         question.Update(
-            request.Text, 
-            request.Difficulty, 
+            request.Text,
+            request.Difficulty,
             request.Explanation,
             mappedOptions
             );
