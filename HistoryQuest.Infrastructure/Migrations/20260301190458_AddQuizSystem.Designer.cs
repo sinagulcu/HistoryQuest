@@ -4,6 +4,7 @@ using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HistoryQuest.Infrastructure.Migrations
 {
     [DbContext(typeof(HistoryQuestDbContext))]
-    partial class HistoryQuestDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260301190458_AddQuizSystem")]
+    partial class AddQuizSystem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -109,7 +112,7 @@ namespace HistoryQuest.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Quizzes");
+                    b.ToTable("Quiz");
                 });
 
             modelBuilder.Entity("HistoryQuest.Domain.Entities.QuizQuestion", b =>
@@ -127,7 +130,7 @@ namespace HistoryQuest.Infrastructure.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("QuizQuestions");
+                    b.ToTable("QuizQuestion");
                 });
 
             modelBuilder.Entity("HistoryQuest.Domain.Entities.RefreshToken", b =>

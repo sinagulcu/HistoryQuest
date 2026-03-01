@@ -1,0 +1,48 @@
+﻿
+using HistoryQuest.Application.Questions.Interfaces;
+using HistoryQuest.Domain.Entities;
+using HistoryQuest.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
+
+namespace HistoryQuest.Infrastructure.Repositories;
+
+public class QuizRepository : IQuizRepository
+{
+    private readonly HistoryQuestDbContext _context;
+
+    public QuizRepository(HistoryQuestDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task AddAsync(Quiz quiz)
+    {
+        await _context.Quizzes.AddAsync(quiz);
+    }
+
+    public async Task<List<Quiz>> GetByTeacherIdAsync(Guid teacherId, bool includeDeleted = false)
+    {
+        var query = _context.Quizzes
+            .Include(q => q.QuizQuestions)
+            .Where(q => q.CreatedByTeacherId == teacherId);
+
+        if (!includeDeleted)
+            query = query.Where(q => !q.IsDeleted);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<Quiz?> GetByIdAsync(Guid quizId)
+    {
+        return await _context.Quizzes
+            .Include(q => q.QuizQuestions)
+            .ThenInclude(q => q.Question)
+            .FirstOrDefaultAsync(q => q.Id == quizId);
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
+    }
+}

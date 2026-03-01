@@ -3,7 +3,7 @@
 using HistoryQuest.Application.Questions.DTOs;
 using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
-using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Models;
 using HistoryQuest.Domain.Exceptions;
 
 namespace HistoryQuest.Application.Questions.UseCases;

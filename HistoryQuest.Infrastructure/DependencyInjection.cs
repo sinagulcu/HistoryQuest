@@ -39,8 +39,8 @@ public static class DependencyInjection
         services.AddScoped<ChangeUserRoleCommand>();
         services.AddScoped<DeleteQuestionCommand>();
         services.AddScoped<DeleteUserCommand>();
-        services.AddScoped<GetQuestionByIdQuery>();
-        services.AddScoped<GetMyQuestionsQuery>();
+        services.AddScoped<GetQuestionByIdCommand>();
+        services.AddScoped<GetMyQuestionsCommand>();
         services.AddScoped<UpdateQuestionCommand>();
         services.AddScoped<RestoreQuestCommand>();
 

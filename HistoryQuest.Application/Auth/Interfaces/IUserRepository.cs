@@ -1,5 +1,5 @@
 using HistoryQuest.Domain.Entities;
-using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Models;
 
 namespace HistoryQuest.Application.Auth.Interfaces;
 

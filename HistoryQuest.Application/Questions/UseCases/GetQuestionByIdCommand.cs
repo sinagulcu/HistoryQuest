@@ -5,11 +5,11 @@ using HistoryQuest.Domain.Entities;
 
 namespace HistoryQuest.Application.Questions.UseCases;
 
-public class GetQuestionByIdQuery
+public class GetQuestionByIdCommand
 {
     private readonly IQuestionRepository _repository;
 
-    public GetQuestionByIdQuery(IQuestionRepository repository)
+    public GetQuestionByIdCommand(IQuestionRepository repository)
     {
         _repository = repository;
     }

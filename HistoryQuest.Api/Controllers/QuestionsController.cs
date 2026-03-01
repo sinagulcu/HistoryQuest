@@ -13,16 +13,16 @@ public class QuestionsController : ControllerBase
 {
     private readonly CreateQuestionCommand _command;
 
-    private readonly GetQuestionByIdQuery _getQuestionByIdQuery;
-    private readonly GetMyQuestionsQuery _getMyQuestionsQuery;
+    private readonly GetQuestionByIdCommand _getQuestionByIdQuery;
+    private readonly GetMyQuestionsCommand _getMyQuestionsQuery;
     private readonly UpdateQuestionCommand _updateQuestionCommand;
     private readonly DeleteQuestionCommand _deleteQuestionCommand;
     private readonly RestoreQuestCommand _restoreQuestionCommand;
 
     public QuestionsController(
         CreateQuestionCommand command, 
-        GetQuestionByIdQuery getQuestionByIdQuery,
-        GetMyQuestionsQuery getMyQuestionsQuery, 
+        GetQuestionByIdCommand getQuestionByIdQuery,
+        GetMyQuestionsCommand getMyQuestionsQuery, 
         UpdateQuestionCommand updateQuestionCommand, 
         DeleteQuestionCommand deleteQuestionCommand,
         RestoreQuestCommand restoreQuestCommand)

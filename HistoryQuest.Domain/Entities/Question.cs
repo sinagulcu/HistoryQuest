@@ -1,6 +1,6 @@
 ﻿
 
-using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Models;
 using HistoryQuest.Domain.Exceptions;
 
 namespace HistoryQuest.Domain.Entities;

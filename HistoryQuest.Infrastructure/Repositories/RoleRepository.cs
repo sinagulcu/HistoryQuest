@@ -1,7 +1,7 @@
 ﻿
 using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Domain.Entities;
-using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Models;
 using HistoryQuest.Domain.Exceptions;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

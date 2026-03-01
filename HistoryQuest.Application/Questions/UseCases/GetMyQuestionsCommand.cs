@@ -6,11 +6,11 @@ using System.Runtime.CompilerServices;
 
 namespace HistoryQuest.Application.Questions.UseCases;
 
-public class GetMyQuestionsQuery
+public class GetMyQuestionsCommand
 {
     private readonly IQuestionRepository _repository;
 
-    public GetMyQuestionsQuery(IQuestionRepository repository)
+    public GetMyQuestionsCommand(IQuestionRepository repository)
     {
         _repository = repository;
     }
