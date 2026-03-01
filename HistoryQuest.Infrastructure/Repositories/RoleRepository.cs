@@ -2,6 +2,7 @@
 using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Enums;
+using HistoryQuest.Domain.Exceptions;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +25,18 @@ public class RoleRepository : IRoleRepository
 
     public async Task<Role?> GetByTypeAsync(UserRoleType roleType)
     {
+        var role = await _context.Roles
+            .FirstOrDefaultAsync(r => r.RoleType == roleType);
+
+        if (role == null)
+            throw new NotFoundException($"Role {roleType} not found.");
+
+        return role;
+    }
+
+    public async Task<bool> ExistsAsync(UserRoleType roleType)
+    {
         return await _context.Roles
-            .SingleOrDefaultAsync(r => r.RoleType == roleType);
+            .AnyAsync(r => r.RoleType == roleType);
     }
 }

@@ -8,29 +8,30 @@ namespace HistoryQuest.Domain.Entities;
 public class Question
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
-
     public string Text { get; private set; } = null!;
     public QuestionDifficulty Difficulty { get; private set; }
     public QuestionType Type { get; private set; }
-
     public Guid CreatedByTeacherId { get; private set; }
-
     public string? Explanation { get; private set; }
-
     public List<QuestionOption> Options { get; private set; } = [];
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
 
     protected Question(
         string text,
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid createdByTeacherId,
-        string? explanation)
+        string? explanation,
+        bool isDeleted = false)
     {
         Text = text;
         Difficulty = difficulty;
         Type = type;
         CreatedByTeacherId = createdByTeacherId;
         Explanation = explanation;
+        IsDeleted = isDeleted;
+        DeletedAt = null;
     }
 
     public static Question Create(
@@ -52,7 +53,6 @@ public class Question
         Text = text;
         Difficulty = difficulty;
         Explanation = explanation;
-
         foreach (var dto in updatedOptions)
         {
             if (dto.Id.HasValue)
@@ -95,6 +95,27 @@ public class Question
     {
         if (Options.Count(o => o.IsCorrect) != 1)
             throw new BusinessRuleException("Question must have exactly one correct option.");
+    }
+
+    public void DeleteByUser(Guid userId, bool isAdmin)
+    {
+        if(!isAdmin && CreatedByTeacherId != userId)
+            throw new UnauthorizedException("Only the creator or an admin can delete this question.");
+
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    public void Restore(Guid userId, bool isAdmin) 
+    {
+        if(!IsDeleted)
+            throw new BusinessRuleException("Question is not deleted.");
+
+        if(!isAdmin && CreatedByTeacherId != userId)
+            throw new UnauthorizedException("Only the creator or an admin can restore this question.");
+
+        IsDeleted = false;
+        DeletedAt = null;
     }
 
     public record UpdateQuestionOptionRequest(

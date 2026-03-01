@@ -15,8 +15,8 @@ public class GetMyQuestionsQuery
         _repository = repository;
     }
 
-    public async Task<List<Question>> ExecuteAsync(Guid teacherId)
+    public async Task<List<Question>> ExecuteAsync(Guid teacherId, bool includeDeleted = false)
     {
-        return await _repository.GetByTeacherIdAsync(teacherId);
+        return await _repository.GetByTeacherIdAsync(teacherId, includeDeleted);
     }
 }

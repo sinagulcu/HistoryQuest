@@ -7,6 +7,7 @@ using HistoryQuest.Application.Questions.UseCases;
 using HistoryQuest.Infrastructure.Persistence;
 using HistoryQuest.Infrastructure.Repositories;
 using HistoryQuest.Infrastructure.Security;
+using HistoryQuest.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,14 +27,23 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<CreateQuestionCommand>();
-        services.AddScoped<RegisterTeacherCommand>();
+        services.AddScoped<LogoutCommand>();
+        services.AddScoped<RefreshTokenCommand>();
+        services.AddScoped<RefreshTokenCleanupService>();
+        services.AddScoped<RefreshTokenCleanupHostedService>();
+        services.AddHostedService<QuestionCleanupService>();
+        services.AddScoped<ChangeUserRoleCommand>();
+        services.AddScoped<DeleteQuestionCommand>();
         services.AddScoped<DeleteUserCommand>();
         services.AddScoped<GetQuestionByIdQuery>();
         services.AddScoped<GetMyQuestionsQuery>();
         services.AddScoped<UpdateQuestionCommand>();
+        services.AddScoped<RestoreQuestCommand>();
+
 
         return services;
     }

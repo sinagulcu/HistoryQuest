@@ -103,6 +103,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-await DataSeeder.SeedAdminAsync(app.Services);
+await DataSeeder.SeedRolesAsync(app.Services);
 
 app.Run();

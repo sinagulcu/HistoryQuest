@@ -38,6 +38,7 @@ public class UpdateQuestionCommand
             request.Difficulty,
             request.Explanation,
             mappedOptions
+
             );
 
         await _repository.SaveChangesAsync();

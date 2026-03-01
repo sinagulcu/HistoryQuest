@@ -27,12 +27,23 @@ public class QuestionRepository : IQuestionRepository
             .FirstOrDefaultAsync(q => q.Id == id);
     }
 
-    public async Task<List<Question>> GetByTeacherIdAsync(Guid teacherId)
+    public async Task<List<Question>> GetByTeacherIdAsync(Guid teacherId, bool includeDeleted = false)
+    {
+        var query = _context.Questions
+            .Include(q => q.Options)
+            .Where(q => q.CreatedByTeacherId == teacherId);
+
+        if(!includeDeleted)
+            query = query.Where(q => !q.IsDeleted);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<Question?> GetByIdIncludingDeletedAsync(Guid id)
     {
         return await _context.Questions
             .Include(q => q.Options)
-            .Where(q => q.CreatedByTeacherId == teacherId)
-            .ToListAsync();
+            .FirstOrDefaultAsync(q => q.Id == id);
     }
 
     public async Task SaveChangesAsync()

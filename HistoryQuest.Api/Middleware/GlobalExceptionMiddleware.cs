@@ -48,7 +48,7 @@ public class GlobalExceptionMiddleware
                 message = ex.Message
             };
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+            await context.Response.WriteAsJsonAsync(response);
         }
 
         //catch (Exception)

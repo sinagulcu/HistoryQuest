@@ -1,5 +1,6 @@
 ﻿using HistoryQuest.Application.Questions.DTOs;
 using HistoryQuest.Application.Questions.UseCases;
+using HistoryQuest.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -15,13 +16,23 @@ public class QuestionsController : ControllerBase
     private readonly GetQuestionByIdQuery _getQuestionByIdQuery;
     private readonly GetMyQuestionsQuery _getMyQuestionsQuery;
     private readonly UpdateQuestionCommand _updateQuestionCommand;
+    private readonly DeleteQuestionCommand _deleteQuestionCommand;
+    private readonly RestoreQuestCommand _restoreQuestionCommand;
 
-    public QuestionsController(CreateQuestionCommand command, GetQuestionByIdQuery getQuestionByIdQuery, GetMyQuestionsQuery getMyQuestionsQuery, UpdateQuestionCommand updateQuestionCommand)
+    public QuestionsController(
+        CreateQuestionCommand command, 
+        GetQuestionByIdQuery getQuestionByIdQuery,
+        GetMyQuestionsQuery getMyQuestionsQuery, 
+        UpdateQuestionCommand updateQuestionCommand, 
+        DeleteQuestionCommand deleteQuestionCommand,
+        RestoreQuestCommand restoreQuestCommand)
     {
         _command = command;
         _getQuestionByIdQuery = getQuestionByIdQuery;
         _getMyQuestionsQuery = getMyQuestionsQuery;
         _updateQuestionCommand = updateQuestionCommand;
+        _deleteQuestionCommand = deleteQuestionCommand;
+        _restoreQuestionCommand = restoreQuestCommand;
     }
 
     [HttpPost]
@@ -37,16 +48,13 @@ public class QuestionsController : ControllerBase
 
     [HttpGet("my")]
     [Authorize(Roles = "Teacher")]
-    public async Task<IActionResult> GetMyQuestion()
+    public async Task<IActionResult> GetMyQuestion([FromQuery] bool includeDeleted = false)
     {
-        var teacherClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var teacherIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (teacherIdClaim == null) return Unauthorized();
 
-        if(teacherClaim == null)
-            return Unauthorized();
-
-        var teacherId = Guid.Parse(teacherClaim);
-
-        var questions = await _getMyQuestionsQuery.ExecuteAsync(teacherId);
+        var teacherId = Guid.Parse(teacherIdClaim);
+        var questions = await _getMyQuestionsQuery.ExecuteAsync(teacherId, includeDeleted);
 
         var result = questions.Select(q => new QuestionForTeacherDto
         {
@@ -54,12 +62,17 @@ public class QuestionsController : ControllerBase
             Text = q.Text,
             Type = q.Type.ToString(),
             Difficulty = q.Difficulty.ToString(),
-            Options = q.Options.Select(o => new OptionForTeacherDto
+            IsDeleted = q.IsDeleted,
+            DeletedAt = q.DeletedAt,
+            DaysUntilHardDelete = q.DeletedAt.HasValue
+            ? 30 - (int)(DateTime.UtcNow - q.DeletedAt.Value).TotalDays
+            : null,
+            Options = [.. q.Options.Select(o => new OptionForTeacherDto
             {
                 Id = o.Id,
                 Text = o.Text,
                 IsCorrect = o.IsCorrect
-            }).ToList()
+            })]
         }).ToList();
 
         return Ok(result);
@@ -90,18 +103,74 @@ public class QuestionsController : ControllerBase
         }
     }
 
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Teacher,Admin")]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = Guid.Parse(userIdClaim);
+        var isAdmin = User.IsInRole("Admin");
+
+        try
+        {
+            await _deleteQuestionCommand.ExecuteAsync(id, userId, isAdmin);
+            return NoContent();
+        }
+        catch (UnauthorizedException)
+        {
+            return Forbid();
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [HttpPatch("{id}/restore")]
+    [Authorize(Roles = "Teacher,Admin")]
+    public async Task<IActionResult> Restore(Guid id)
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+            return Unauthorized();
+
+        var userId = Guid.Parse(userIdClaim);
+        var isAdmin = User.IsInRole("Admin");
+
+        try
+        {
+            await _restoreQuestionCommand.ExecuteAsync(id, userId, isAdmin);
+            return NoContent();
+        }
+        catch (UnauthorizedException)
+        {
+            return Forbid();
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     [HttpGet("{id}")]
     [Authorize]
     public async Task<IActionResult> GetById(Guid id)
     {
         var question = await _getQuestionByIdQuery.ExecuteAsync(id);
 
-        if(question == null)
+        if (question == null)
             return NotFound();
 
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        if(role == "Teacher")
+        if (role == "Teacher")
         {
             var teacherDto = new QuestionForTeacherDto
             {

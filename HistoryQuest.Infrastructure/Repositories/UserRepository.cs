@@ -4,6 +4,7 @@ using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Enums;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
 
 namespace HistoryQuest.Infrastructure.Repositories;
 
@@ -36,7 +37,8 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .Include(u => u.Roles)
-            .SingleOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
+            .ThenInclude(ur => ur.Role)
+            .FirstOrDefaultAsync(u => u.Id == id);
     }
 
     public async Task AddAsync(User user)
@@ -47,6 +49,17 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user)
     {
+        var existingRoles = await _context.UserRoles
+            .Where(ur => ur.UserId == user.Id)
+            .Select(ur => ur.RoleId)
+            .ToListAsync();
+
+        foreach (var userRole in user.Roles)
+        {
+            if (!existingRoles.Contains(userRole.RoleId))
+                _context.UserRoles.Add(userRole);
+        }
+
         await _context.SaveChangesAsync();
     }
 

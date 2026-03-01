@@ -12,6 +12,7 @@ public class RefreshToken : BaseEntity
     public Guid UserId { get; private set; }
     public User User { get; private set; }
 
+
     protected RefreshToken() { }
 
     public RefreshToken(string token, DateTime expiryDate, Guid userId)
