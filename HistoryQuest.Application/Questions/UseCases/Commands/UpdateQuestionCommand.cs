@@ -1,9 +1,8 @@
-﻿
-using HistoryQuest.Application.Questions.DTOs;
+﻿using HistoryQuest.Application.Questions.DTOs;
 using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Commands;
 
 public class UpdateQuestionCommand
 {

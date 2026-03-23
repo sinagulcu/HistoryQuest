@@ -19,7 +19,7 @@ public class Quiz
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
 
-    public List<QuizQuestion> QuizQuestions { get; private set; } = [];
+    public ICollection<QuizQuestion> QuizQuestions { get; private set; } = new List<QuizQuestion>();
 
     protected Quiz() { }
 
@@ -37,6 +37,8 @@ public class Quiz
 
     public void Update(string title, string? description)
     {
+        EnsureEditable();
+
         Title = title;
         Description = description;
     }
@@ -45,8 +47,17 @@ public class Quiz
     {
         if (!QuizQuestions.Any())
             throw new BusinessRuleException("Quiz must contain at least one question before publishing.");
+        if(Status != QuizStatus.Draft)
+            throw new BusinessRuleException("Only quizzes in Draft status can be published.");
 
         Status = QuizStatus.Published;
+    }
+
+    public void Unpublish()
+    {
+        if (Status != QuizStatus.Published)
+            throw new BusinessRuleException("Only quizzes in Published status can be unpublished.");
+        Status = QuizStatus.Draft;
     }
 
     public void Archive()
@@ -64,5 +75,11 @@ public class Quiz
     {
         IsDeleted = false;
         DeletedAt = null;
+    }
+
+    public void EnsureEditable()
+    {
+        if (Status != QuizStatus.Draft)
+            throw new BusinessRuleException("Only quizzes in Draft status can be edited.");
     }
 }

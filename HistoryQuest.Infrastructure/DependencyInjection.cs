@@ -3,7 +3,9 @@
 using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Application.Auth.UseCases;
 using HistoryQuest.Application.Questions.Interfaces;
-using HistoryQuest.Application.Questions.UseCases;
+using HistoryQuest.Application.Questions.UseCases.Commands;
+using HistoryQuest.Application.Questions.UseCases.Quiz;
+using HistoryQuest.Application.Questions.UseCases.Quiz.Commands;
 using HistoryQuest.Infrastructure.Persistence;
 using HistoryQuest.Infrastructure.Repositories;
 using HistoryQuest.Infrastructure.Security;
@@ -30,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
         services.AddScoped<IQuestionRepository, QuestionRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IQuizRepository, QuizRepository>();
+        services.AddScoped<GetQuizDetailQuery>();
         services.AddScoped<CreateQuestionCommand>();
         services.AddScoped<LogoutCommand>();
         services.AddScoped<RefreshTokenCommand>();
@@ -43,6 +47,19 @@ public static class DependencyInjection
         services.AddScoped<GetMyQuestionsCommand>();
         services.AddScoped<UpdateQuestionCommand>();
         services.AddScoped<RestoreQuestCommand>();
+        services.AddScoped<CreateQuizCommand>();
+        services.AddScoped<GetMyQuizzesCommand>();
+        services.AddScoped<AddQuestionToQuizCommand>();
+        services.AddScoped<PublishQuizCommand>();
+        services.AddScoped<UnpublishCommand>();
+        services.AddScoped<SoftDeleteQuizCommand>();
+        services.AddScoped<RestoreQuizCommand>();
+        services.AddScoped<RemoveQuestionFromQuizCommand>();
+
+        services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
+        services.AddScoped<StartQuizQueryHandler>();
+        services.AddScoped<SubmitQuizCommandHandler>();
+        services.AddScoped<GetAttemptResultQueryHandler>();
 
 
         return services;

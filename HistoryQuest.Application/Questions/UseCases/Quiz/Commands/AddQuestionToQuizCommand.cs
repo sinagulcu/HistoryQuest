@@ -1,10 +1,8 @@
-﻿
-
-using HistoryQuest.Application.Questions.Interfaces;
+﻿using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Exceptions;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Quiz.Commands;
 
 public class AddQuestionToQuizCommand
 {
@@ -22,12 +20,14 @@ public class AddQuestionToQuizCommand
         var quiz = await _quizRepository.GetByIdAsync(quizId);
         if (quiz == null) throw new NotFoundException("Quiz not found.");
 
+        quiz.EnsureEditable();
+
         var question = await _questionRepository.GetByIdAsync(questionId);
         if (question == null || question.IsDeleted)
             throw new NotFoundException("Question not found or deleted.");
 
         if (question.CreatedByTeacherId != teacherId)
-            throw new UnauthorizedAccessException("You cannot add this question.");
+            throw new UnauthorizedException("You cannot add this question.");
 
         if (quiz.QuizQuestions.Any(q => q.QuestionId == questionId))
             throw new BusinessRuleException("Question already added to this quiz.");

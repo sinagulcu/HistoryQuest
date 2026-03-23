@@ -36,9 +36,10 @@ public class QuizRepository : IQuizRepository
     public async Task<Quiz?> GetByIdAsync(Guid quizId)
     {
         return await _context.Quizzes
-            .Include(q => q.QuizQuestions)
-            .ThenInclude(q => q.Question)
-            .FirstOrDefaultAsync(q => q.Id == quizId);
+                .Include(q => q.QuizQuestions)
+                .ThenInclude(q => q.Question)
+                .ThenInclude(q => q.Options)
+                .FirstOrDefaultAsync(q => q.Id == quizId);
     }
 
     public async Task SaveChangesAsync()

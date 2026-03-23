@@ -1,9 +1,7 @@
-﻿
-
-using HistoryQuest.Application.Questions.Interfaces;
+﻿using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Commands;
 
 public class GetQuestionByIdCommand
 {

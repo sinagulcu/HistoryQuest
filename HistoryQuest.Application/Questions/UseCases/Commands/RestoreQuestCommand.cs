@@ -1,8 +1,7 @@
-﻿
-using HistoryQuest.Application.Questions.Interfaces;
+﻿using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Exceptions;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Commands;
 
 public class RestoreQuestCommand
 {

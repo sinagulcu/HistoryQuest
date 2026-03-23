@@ -1,10 +1,8 @@
-﻿
-
-using HistoryQuest.Application.Questions.Interfaces;
+﻿using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
 using System.Runtime.CompilerServices;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Commands;
 
 public class GetMyQuestionsCommand
 {

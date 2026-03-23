@@ -1,5 +1,5 @@
 ﻿using HistoryQuest.Application.Questions.DTOs;
-using HistoryQuest.Application.Questions.UseCases;
+using HistoryQuest.Application.Questions.UseCases.Commands;
 using HistoryQuest.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -46,7 +46,7 @@ public class QuestionsController : ControllerBase
         return Ok(new { questionId });
     }
 
-    [HttpGet("my")]
+    [HttpGet("getmyquestions")]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> GetMyQuestion([FromQuery] bool includeDeleted = false)
     {
@@ -78,7 +78,7 @@ public class QuestionsController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("update/{id}")]
     [Authorize(Roles = "Teacher")]
     public async Task<IActionResult> Update(Guid id, UpdateQuestionRequest request)
     {
@@ -103,7 +103,7 @@ public class QuestionsController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("delete/{id}")]
     [Authorize(Roles = "Teacher,Admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
@@ -129,7 +129,7 @@ public class QuestionsController : ControllerBase
         }
     }
 
-    [HttpPatch("{id}/restore")]
+    [HttpPatch("restore/{id}")]
     [Authorize(Roles = "Teacher,Admin")]
     public async Task<IActionResult> Restore(Guid id)
     {
@@ -159,7 +159,7 @@ public class QuestionsController : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("get/{id}")]
     [Authorize]
     public async Task<IActionResult> GetById(Guid id)
     {

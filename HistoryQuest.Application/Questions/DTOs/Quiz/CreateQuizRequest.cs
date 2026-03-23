@@ -1,6 +1,4 @@
-﻿
-
-namespace HistoryQuest.Application.Questions.DTOs;
+﻿namespace HistoryQuest.Application.Questions.DTOs.Quiz;
 
 public class CreateQuizRequest
 {

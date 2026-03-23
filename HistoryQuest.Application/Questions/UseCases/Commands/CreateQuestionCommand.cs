@@ -6,7 +6,7 @@ using HistoryQuest.Domain.Entities;
 using HistoryQuest.Domain.Models;
 using HistoryQuest.Domain.Exceptions;
 
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Commands;
 
 public class CreateQuestionCommand
 {

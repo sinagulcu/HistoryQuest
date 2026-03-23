@@ -1,9 +1,6 @@
-﻿
+﻿using HistoryQuest.Application.Questions.Interfaces;
 
-using HistoryQuest.Application.Questions.Interfaces;
-using HistoryQuest.Domain.Entities;
-
-namespace HistoryQuest.Application.Questions.UseCases;
+namespace HistoryQuest.Application.Questions.UseCases.Quiz.Commands;
 
 public class GetMyQuizzesCommand
 {
@@ -14,7 +11,7 @@ public class GetMyQuizzesCommand
         _repository = repository;
     }
 
-    public async Task<List<Quiz>> ExecuteAsync(Guid teacherId, bool includeDeleted)
+    public async Task<List<Domain.Entities.Quiz>> ExecuteAsync(Guid teacherId, bool includeDeleted)
     {
         return await _repository.GetByTeacherIdAsync(teacherId, includeDeleted);
     }
