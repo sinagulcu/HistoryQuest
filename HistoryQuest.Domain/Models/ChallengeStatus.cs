@@ -1,5 +1,4 @@
-﻿
-namespace HistoryQuest.Domain.Enums;
+﻿namespace HistoryQuest.Domain.Models;
 
 public enum ChallengeStatus
 {

@@ -1,11 +1,9 @@
-﻿
-
-using HistoryQuest.Domain.Enums;
-using HistoryQuest.Domain.Exceptions;
+﻿using HistoryQuest.Domain.Exceptions;
+using HistoryQuest.Domain.Models;
 
 namespace HistoryQuest.Domain.Entities;
 
-public class TimedChallenge
+public sealed class TimedChallenge
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
 
@@ -22,7 +20,7 @@ public class TimedChallenge
     public bool ShowExplanationOnWrong { get; private set; }
     public bool NotifyAllStudents { get; private set; }
 
-    public DateTime CreatedAt { get; private set; }
+    public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; private set; }
 
     public bool IsDeleted { get; private set; }
@@ -42,9 +40,6 @@ public class TimedChallenge
         bool showExplanationOnWrong,
         bool notifyAllStudents)
     {
-        Id = Guid.NewGuid();
-        CreatedAt = DateTime.UtcNow;
-
         SetTitle(title);
         SetQuestion(questionId);
         SetCreator(createdByTeacherId);
@@ -98,22 +93,21 @@ public class TimedChallenge
         SetQuestion(questionId);
         SetTiming(scheduledAtUtc, answerWindowSeconds, visibilityWindowSeconds);
         SetScoring(maxScore);
-        
+
         ShowCorrectAnswerOnWrong = showCorrectAnswerOnWrong;
         ShowExplanationOnWrong = showExplanationOnWrong;
         NotifyAllStudents = notifyAllStudents;
-        
+
         UpdatedAt = DateTime.UtcNow;
     }
 
     public ChallengeStatus GetStatus(DateTime utcNow)
     {
-        var scoreDeadLine = ScheduledAtUtc.AddSeconds(AnswerWindowSeconds);
-        var visibilityDeadline = ScheduledAtUtc.AddSeconds(VisibilityWindowSeconds);
-
-        if(utcNow < ScheduledAtUtc)
+        if (utcNow < ScheduledAtUtc)
             return ChallengeStatus.Scheduled;
-        if(utcNow <= visibilityDeadline)
+
+        var visibilityEnd = ScheduledAtUtc.AddSeconds(VisibilityWindowSeconds);
+        if (utcNow <= visibilityEnd)
             return ChallengeStatus.Active;
 
         return ChallengeStatus.Expired;
@@ -122,7 +116,7 @@ public class TimedChallenge
     public void SoftDelete()
     {
         EnsureNotDeleted();
-     
+
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
@@ -131,7 +125,8 @@ public class TimedChallenge
     public void Restore()
     {
         if (!IsDeleted)
-            throw new BusinessRuleException("Timed challenge is not deleted.");
+            throw new BusinessRuleException("Challenge is not deleted.");
+
         IsDeleted = false;
         DeletedAt = null;
         UpdatedAt = DateTime.UtcNow;
@@ -140,28 +135,28 @@ public class TimedChallenge
     private void SetTitle(string title)
     {
         if (string.IsNullOrWhiteSpace(title))
-            throw new BusinessRuleException("Title cannot be empty.");
-        var normalized = title.Trim();
+            throw new BusinessRuleException("Challenge title cannot be empty.");
 
-        if(normalized.Length < 3)
-            throw new BusinessRuleException("Title must be at least 3 characters long.");
-        
+        var normalized = title.Trim();
+        if (normalized.Length < 3)
+            throw new BusinessRuleException("Challenge title must be at least 3 characters long.");
+
         Title = normalized;
     }
 
     private void SetQuestion(Guid questionId)
     {
         if (questionId == Guid.Empty)
-            throw new UnauthorizedException("Question must be selected.");
-        
+            throw new BusinessRuleException("Question id is required.");
+
         QuestionId = questionId;
     }
 
     private void SetCreator(Guid teacherId)
     {
         if (teacherId == Guid.Empty)
-            throw new UnauthorizedException("Creator must be specified.");
-        
+            throw new BusinessRuleException("Teacher id is required.");
+
         CreatedByTeacherId = teacherId;
     }
 
@@ -171,9 +166,10 @@ public class TimedChallenge
             scheduledAtUtc = DateTime.SpecifyKind(scheduledAtUtc, DateTimeKind.Utc);
 
         if (answerWindowSeconds < 30)
-            throw new BusinessRuleException("Scored time must be greater than 30 seconds.");
+            throw new BusinessRuleException("Answer window must be at least 30 seconds.");
+
         if (visibilityWindowSeconds < answerWindowSeconds)
-            throw new BusinessRuleException("Broadcast time must be longer than the rated time.");
+            throw new BusinessRuleException("Visibility window cannot be smaller than answer window.");
 
         ScheduledAtUtc = scheduledAtUtc;
         AnswerWindowSeconds = answerWindowSeconds;
@@ -183,14 +179,14 @@ public class TimedChallenge
     private void SetScoring(int maxScore)
     {
         if (maxScore <= 0)
-            throw new BusinessRuleException("Max score must be at least 0.");
-        
+            throw new BusinessRuleException("Max score must be greater than 0.");
+
         MaxScore = maxScore;
     }
 
     private void EnsureNotDeleted()
     {
-        if(IsDeleted)
-            throw new UnauthorizedException("Timed challenge is deleted.");
+        if (IsDeleted)
+            throw new BusinessRuleException("Cannot modify a deleted challenge.");
     }
 }

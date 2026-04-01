@@ -80,6 +80,6 @@ public sealed class Category
     private void EnsureNotDeleted()
     {
         if (IsDeleted)
-            throw new UnauthorizedException("Cannot modify a deleted category.");
+            throw new BusinessRuleException("Cannot modify a deleted category.");
     }
 }

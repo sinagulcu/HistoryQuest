@@ -2,7 +2,7 @@
 
 using HistoryQuest.Domain.Entities;
 
-namespace HistoryQuest.Infrastructure.Repositories.Interfaces;
+namespace HistoryQuest.Application.Categories.Interfaces;
 
 public interface ICategoryRepository
 {

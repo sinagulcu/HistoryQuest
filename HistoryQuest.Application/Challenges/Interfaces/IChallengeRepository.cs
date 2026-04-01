@@ -1,9 +1,10 @@
 ﻿
 
-
 using HistoryQuest.Domain.Entities;
 
-public interface ITimedChallengeRepository
+namespace HistoryQuest.Application.Challenges.Interfaces;
+
+public interface IChallengeRepository
 {
     Task<List<TimedChallenge>> GetAllAsync(
         Guid currentUserId,
