@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+  --hq-bg: #fcfbf8;
+  --hq-fg: #1c1917;
+  --hq-border: #e9e3d6;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --hq-bg: #15120f;
+  --hq-fg: #f5f1e8;
+  --hq-border: #3a3228;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--hq-bg);
+  color: var(--hq-fg);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background-image:
+    radial-gradient(circle at 12% -15%, rgb(184 146 68 / 0.12), transparent 36%),
+    radial-gradient(circle at 88% -20%, rgb(120 113 108 / 0.1), transparent 32%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 12% -15%, rgb(202 166 86 / 0.18), transparent 36%),
+    radial-gradient(circle at 88% -20%, rgb(120 113 108 / 0.18), transparent 34%);
+}
+
+.hq-gold-text {
+  color: #7b5a1c;
+}
+
+.dark .hq-gold-text {
+  color: #d8b66b;
+}
+
+.hq-gold-surface {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(135deg, rgb(108 79 26 / 0.98), rgb(140 104 34 / 0.99), rgb(166 126 44 / 0.98), rgb(189 146 55 / 0.97))
+      padding-box,
+    linear-gradient(135deg, rgb(121 95 34 / 0.9), rgb(211 176 94 / 0.72)) border-box;
+  color: #ffffff;
+}
+
+.dark .hq-gold-surface {
+  background:
+    linear-gradient(135deg, rgb(99 72 20 / 0.98), rgb(131 96 30 / 0.99), rgb(157 118 40 / 0.97), rgb(184 139 50 / 0.94))
+      padding-box,
+    linear-gradient(135deg, rgb(135 106 40 / 0.9), rgb(206 169 86 / 0.7)) border-box;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(168 162 158 / 0.7) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgb(168 162 158 / 0.55);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(120 113 108 / 0.85);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgb(168 162 158);
+}
+
+select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(1em + 1px), calc(100% - 13px) calc(1em + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hq-fade-in {
+    animation: hqFadeIn 240ms ease-out;
+  }
+}
+
+@keyframes hqFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

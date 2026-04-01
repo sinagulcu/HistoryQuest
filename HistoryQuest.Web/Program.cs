@@ -1,4 +1,7 @@
+using HistoryQuest.Web.Auth;
 using HistoryQuest.Web.Components;
+using HistoryQuest.Web.Services;
+using HistoryQuest.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
