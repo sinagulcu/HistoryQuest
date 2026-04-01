@@ -18,6 +18,7 @@ public class QuestionsController : ControllerBase
     private readonly UpdateQuestionCommand _updateQuestionCommand;
     private readonly DeleteQuestionCommand _deleteQuestionCommand;
     private readonly RestoreQuestCommand _restoreQuestionCommand;
+    private readonly GetAllQuestionsCommand _getAllQuestionsCommand;
 
     public QuestionsController(
         CreateQuestionCommand command, 
@@ -25,7 +26,8 @@ public class QuestionsController : ControllerBase
         GetMyQuestionsCommand getMyQuestionsQuery, 
         UpdateQuestionCommand updateQuestionCommand, 
         DeleteQuestionCommand deleteQuestionCommand,
-        RestoreQuestCommand restoreQuestCommand)
+        RestoreQuestCommand restoreQuestCommand,
+        GetAllQuestionsCommand getAllQuestionsCommand)
     {
         _command = command;
         _getQuestionByIdQuery = getQuestionByIdQuery;
@@ -33,6 +35,7 @@ public class QuestionsController : ControllerBase
         _updateQuestionCommand = updateQuestionCommand;
         _deleteQuestionCommand = deleteQuestionCommand;
         _restoreQuestionCommand = restoreQuestCommand;
+        _getAllQuestionsCommand = getAllQuestionsCommand;
     }
 
     [HttpPost]
@@ -44,6 +47,19 @@ public class QuestionsController : ControllerBase
         var questionId = await _command.ExecuteAsync(request, teacherId);
 
         return Ok(new { questionId });
+    }
+
+    [HttpGet]
+    [Authorize(Roles ="Teacher,Admin")]
+    public async Task<IActionResult> GetAll([FromQuery] bool includeDeleted = false)
+    {
+        var isAdmin = User.IsInRole("Admin");
+
+        if(!isAdmin) includeDeleted = false;
+
+        var result = await _getAllQuestionsCommand.ExecuteAsync(includeDeleted);
+
+        return Ok(result);
     }
 
     [HttpGet("getmyquestions")]
@@ -79,22 +95,19 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpPut("update/{id}")]
-    [Authorize(Roles = "Teacher")]
+    [Authorize(Roles = "Teacher, Admin")]
     public async Task<IActionResult> Update(Guid id, UpdateQuestionRequest request)
     {
-        var teacherIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null) return Unauthorized();
 
-        if (teacherIdClaim == null)
-            return Unauthorized();
-
-        var teacherId = Guid.Parse(teacherIdClaim);
+        var currentUserId = Guid.Parse(userIdClaim);
+        var isAdmin = User.IsInRole("Admin");
 
         try
         {
-            var result = await _updateQuestionCommand.ExecuteAsync(id, teacherId, request);
-            if (!result)
-                return NotFound();
-
+            var result = await _updateQuestionCommand.ExecuteAsync(id, currentUserId, isAdmin, request);
+            if (!result) return NotFound();
             return Ok();
         }
         catch (UnauthorizedAccessException)

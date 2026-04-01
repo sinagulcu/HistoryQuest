@@ -47,7 +47,7 @@ export default function ChallengeEditPage() {
       ]);
 
       const challengeData = challengeResponse.data;
-      if (user?.role === "Teacher" && challengeData.createdByUserId !== user.id) {
+      if (user?.role === "Teacher" && challengeData.createdByTeacherId !== user.id) {
         toast.error("Bu kaydi duzenleme yetkiniz yok");
         navigate("/challenges", { replace: true });
         return;
@@ -100,7 +100,6 @@ export default function ChallengeEditPage() {
     try {
       await challengeApi.update(challengeId, {
         ...values,
-        scheduledAt: new Date(values.scheduledAt).toISOString(),
       });
       toast.success("Meydan okuma guncellendi");
       navigate("/challenges");
@@ -119,13 +118,13 @@ export default function ChallengeEditPage() {
     ? {
         title: challenge.title,
         questionId: challenge.questionId,
-        scheduledAt: toDateTimeLocalValue(challenge.scheduledAt),
-        scoringDurationMinutes: challenge.scoringDurationMinutes,
-        lateDurationMinutes: challenge.lateDurationMinutes,
+        scheduledAt: toDateTimeLocalValue(challenge.scheduledAtUtc),
+        scoringDurationMinutes: Math.max(1, Math.floor(challenge.answerWindowSeconds / 60)),
+        lateDurationMinutes: Math.max(1, Math.floor(challenge.visibilityWindowSeconds / 60)),
         maxScore: challenge.maxScore,
         showCorrectAnswerOnWrong: challenge.showCorrectAnswerOnWrong,
         showExplanationOnWrong: challenge.showExplanationOnWrong,
-        explanation: challenge.explanation || "",
+        explanation: "",
         notifyAllStudents: challenge.notifyAllStudents,
       }
     : undefined;

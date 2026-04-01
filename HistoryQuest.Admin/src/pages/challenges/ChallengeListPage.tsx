@@ -1,5 +1,4 @@
 import axios from "axios";
-import { format } from "date-fns";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -14,21 +13,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import type { Challenge, ChallengeStatus } from "@/types/challenge.types";
+import { formatServerDateTime } from "@/utils/dateTime";
 
 const statusLabelMap: Record<ChallengeStatus, string> = {
-  Draft: "Taslak",
   Scheduled: "Planlandi",
   Active: "Yayinda",
-  Completed: "Tamamlandi",
-  Cancelled: "Iptal",
+  Expired: "Suresi Doldu",
 };
 
 const statusClassMap: Record<ChallengeStatus, string> = {
-  Draft: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-200",
   Scheduled: "bg-[#f7efdc] text-[#876822] dark:bg-[#2f2615] dark:text-[#d7bd7e]",
   Active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
-  Completed: "bg-[#efe6d0] text-[#725519] dark:bg-[#372d18] dark:text-[#d8bf82]",
-  Cancelled: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  Expired: "bg-stone-200 text-stone-700 dark:bg-stone-800 dark:text-stone-200",
 };
 
 export default function ChallengeListPage() {
@@ -71,7 +67,7 @@ export default function ChallengeListPage() {
     if (user.role === "Admin") {
       return true;
     }
-    return challenge.createdByUserId === user.id;
+    return challenge.createdByTeacherId === user.id;
   };
 
   const filteredChallenges = useMemo(() => {
@@ -84,10 +80,10 @@ export default function ChallengeListPage() {
 
       let creatorMatch = true;
       if (creatorFilter === "mine") {
-        creatorMatch = challenge.createdByUserId === user?.id;
+        creatorMatch = challenge.createdByTeacherId === user?.id;
       }
       if (creatorFilter === "others") {
-        creatorMatch = challenge.createdByUserId !== user?.id;
+        creatorMatch = challenge.createdByTeacherId !== user?.id;
       }
 
       return searchMatch && statusMatch && creatorMatch;
@@ -138,11 +134,9 @@ export default function ChallengeListPage() {
           onChange={(event) => setStatusFilter(event.target.value as ChallengeStatus | "all")}
         >
           <option value="all">Tum durumlar</option>
-          <option value="Draft">Taslak</option>
           <option value="Scheduled">Planlandi</option>
           <option value="Active">Yayinda</option>
-          <option value="Completed">Tamamlandi</option>
-          <option value="Cancelled">Iptal</option>
+          <option value="Expired">Suresi Doldu</option>
         </select>
         <select
           className="h-10 rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
@@ -178,16 +172,18 @@ export default function ChallengeListPage() {
             </thead>
             <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
               {filteredChallenges.map((challenge) => {
-                const challengeStatus = challenge.status || "Draft";
+                const challengeStatus = challenge.status;
+                const scoringMinutes = Math.floor(challenge.answerWindowSeconds / 60);
+                const extraMinutes = Math.max(0, Math.floor((challenge.visibilityWindowSeconds - challenge.answerWindowSeconds) / 60));
                 return (
                   <tr key={challenge.id} className="text-sm text-stone-700 dark:text-stone-200">
                     <td className="px-4 py-3">{challenge.title}</td>
                     <td className="max-w-sm px-4 py-3">{challenge.questionText || challenge.question?.text || `#${challenge.questionId}`}</td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      {format(new Date(challenge.scheduledAt), "dd.MM.yyyy HH:mm")}
+                      {formatServerDateTime(challenge.scheduledAtUtc)}
                     </td>
                     <td className="px-4 py-3">
-                      {challenge.scoringDurationMinutes} dk / {challenge.lateDurationMinutes} dk
+                      {scoringMinutes} dk / {extraMinutes} dk
                     </td>
                     <td className="px-4 py-3">{challenge.maxScore}</td>
                     <td className="px-4 py-3">
@@ -195,7 +191,7 @@ export default function ChallengeListPage() {
                         {statusLabelMap[challengeStatus]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{challenge.createdByUserName || challenge.createdByUserId}</td>
+                    <td className="px-4 py-3">{challenge.createdByTeacherName || challenge.createdByTeacherId}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         {canManageChallenge(challenge) ? (

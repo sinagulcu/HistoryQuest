@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import Label from "@/components/ui/label";
 import type { Category } from "@/types/category.types";
 import type { Question } from "@/types/question.types";
+import { toLocalDateTimeInputValue } from "@/utils/dateTime";
 import type { ChallengeFormValues, QuestionFormValues } from "@/utils/validators";
 import { challengeSchema } from "@/utils/validators";
 
@@ -23,13 +24,7 @@ interface ChallengeFormProps {
 }
 
 function toDateTimeLocalValue(isoDate: string) {
-  const date = new Date(isoDate);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-  const timezoneOffset = date.getTimezoneOffset() * 60000;
-  const local = new Date(date.getTime() - timezoneOffset);
-  return local.toISOString().slice(0, 16);
+  return toLocalDateTimeInputValue(isoDate);
 }
 
 export default function ChallengeForm({

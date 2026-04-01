@@ -1,5 +1,4 @@
 import axios from "axios";
-import { format, isValid, parseISO } from "date-fns";
 import { RefreshCw, Trash2, UserRoundCog, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import type { UserRole } from "@/types/auth.types";
 import type { User } from "@/types/user.types";
+import { formatServerDateTime } from "@/utils/dateTime";
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string) {
   if (axios.isAxiosError(error)) {
@@ -35,17 +35,7 @@ function getRoleClass(role: UserRole) {
 }
 
 function formatCreatedAt(user: User) {
-  const value = user.createdAt;
-  if (!value) {
-    return "-";
-  }
-
-  const parsedDate = parseISO(value);
-  if (!isValid(parsedDate)) {
-    return "-";
-  }
-
-  return format(parsedDate, "dd.MM.yyyy HH:mm");
+  return formatServerDateTime(user.createdAt);
 }
 
 export default function UserListPage() {

@@ -15,7 +15,8 @@ public class UpdateQuestionCommand
 
     public async Task<bool> ExecuteAsync(
         Guid questionId,
-        Guid teacherId,
+        Guid currentUserId,
+        bool isAdmin,
         UpdateQuestionRequest request)
     {
         var question = await _repository.GetByIdAsync(questionId);
@@ -23,7 +24,7 @@ public class UpdateQuestionCommand
         if (question == null)
             return false;
 
-        if (question.CreatedByTeacherId != teacherId)
+        if (question.CreatedByTeacherId != currentUserId && !isAdmin)
             throw new UnauthorizedAccessException("You cannot update this question.");
         var mappedOptions = request.Options
             .Select(o => new Question.UpdateQuestionOptionRequest(

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { format, isValid, parseISO } from "date-fns";
 import { BarChart3, FileQuestion, FolderPlus, Plus, Users2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -19,9 +18,6 @@ import { useNavigate } from "react-router-dom";
 import { categoryApi } from "@/api/category.api";
 import { questionApi } from "@/api/question.api";
 import { quizApi } from "@/api/quiz.api";
-import { quizAttemptApi } from "@/api/quizAttempt.api";
-import { statsApi, type DashboardStats } from "@/api/stats.api";
-import { userApi } from "@/api/user.api";
 import ErrorState from "@/components/shared/ErrorState";
 import LoadingState from "@/components/shared/LoadingState";
 import PageSection from "@/components/shared/PageSection";
@@ -30,7 +26,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Category } from "@/types/category.types";
 import type { Question } from "@/types/question.types";
 import type { Quiz } from "@/types/quiz.types";
-import type { User } from "@/types/user.types";
+import { formatServerDateTime, getServerTimestamp } from "@/utils/dateTime";
 
 interface KpiStats {
   totalQuizzes: number;
@@ -52,41 +48,15 @@ function getApiErrorMessage(error: unknown, fallbackMessage: string) {
 }
 
 function getTimestamp(value: string | undefined, fallback: number | string): number {
-  if (!value) {
-    if (typeof fallback === "number") {
-      return fallback;
-    }
-
-    return Number.parseInt(fallback.replace(/[^0-9]/g, "").slice(0, 12) || "0", 10);
-  }
-
-  const parsedDate = parseISO(value);
-  if (!isValid(parsedDate)) {
-    if (typeof fallback === "number") {
-      return fallback;
-    }
-
-    return Number.parseInt(fallback.replace(/[^0-9]/g, "").slice(0, 12) || "0", 10);
-  }
-
-  return parsedDate.getTime();
+  const fallbackValue =
+    typeof fallback === "number"
+      ? fallback
+      : Number.parseInt(fallback.replace(/[^0-9]/g, "").slice(0, 12) || "0", 10);
+  return getServerTimestamp(value, fallbackValue);
 }
 
 function formatDateTime(value: string | undefined) {
-  if (!value) {
-    return "-";
-  }
-  const parsedDate = parseISO(value);
-  if (!isValid(parsedDate)) {
-    return "-";
-  }
-  return format(parsedDate, "dd.MM.yyyy HH:mm");
-}
-
-function extractRecentActivityText(item: Record<string, unknown>) {
-  const candidates = [item.title, item.description, item.message, item.action];
-  const textValue = candidates.find((candidate) => typeof candidate === "string");
-  return typeof textValue === "string" ? textValue : "Sistem aktivitesi";
+  return formatServerDateTime(value);
 }
 
 export default function DashboardPage() {
@@ -119,37 +89,11 @@ export default function DashboardPage() {
       const questions = questionResponse.data;
       const categories = categoryResponse.data;
 
-      let statsPayload: DashboardStats | null = null;
-      try {
-        const statsResponse = await statsApi.getDashboard();
-        statsPayload = statsResponse.data;
-      } catch {
-        statsPayload = null;
-      }
-
-      let totalAttempts = statsPayload?.totalAttempts ?? 0;
-      try {
-        const attemptsResponse = await quizAttemptApi.getAll();
-        totalAttempts = attemptsResponse.data.length;
-      } catch {
-        totalAttempts = statsPayload?.totalAttempts ?? 0;
-      }
-
-      let users: User[] = [];
-      if (isAdmin) {
-        try {
-          const usersResponse = await userApi.getAll();
-          users = usersResponse.data;
-        } catch {
-          users = [];
-        }
-      }
-
       setKpiStats({
-        totalQuizzes: statsPayload?.totalQuizzes ?? quizzes.length,
-        totalQuestions: statsPayload?.totalQuestions ?? questions.length,
-        totalAttempts,
-        totalUsers: statsPayload?.totalUsers ?? users.length,
+        totalQuizzes: quizzes.length,
+        totalQuestions: questions.length,
+        totalAttempts: 0,
+        totalUsers: 0,
       });
 
       const sortedQuizzes = [...quizzes].sort(
@@ -185,43 +129,12 @@ export default function DashboardPage() {
       ]);
 
       if (isAdmin) {
-        const roleCounter = { Admin: 0, Teacher: 0, Student: 0 };
-        users.forEach((currentUser) => {
-          roleCounter[currentUser.role] += 1;
-        });
-        setRoleDistribution([
-          { name: "Admin", value: roleCounter.Admin },
-          { name: "Teacher", value: roleCounter.Teacher },
-          { name: "Student", value: roleCounter.Student },
-        ]);
+        setRoleDistribution([]);
       } else {
         setRoleDistribution([]);
       }
 
       const activityList: Array<{ text: string; dateLabel: string }> = [];
-      if (Array.isArray(statsPayload?.recentActivity)) {
-        statsPayload.recentActivity.slice(0, 5).forEach((entry) => {
-          if (typeof entry === "string") {
-            activityList.push({ text: entry, dateLabel: "" });
-            return;
-          }
-
-          if (entry && typeof entry === "object") {
-            const entryRecord = entry as Record<string, unknown>;
-            const createdValue =
-              typeof entryRecord.createdAt === "string"
-                ? entryRecord.createdAt
-                : typeof entryRecord.date === "string"
-                  ? entryRecord.date
-                  : undefined;
-
-            activityList.push({
-              text: extractRecentActivityText(entryRecord),
-              dateLabel: formatDateTime(createdValue),
-            });
-          }
-        });
-      }
       setRecentActivity(activityList);
     } catch (requestError) {
       setError(getApiErrorMessage(requestError, "Dashboard verileri yuklenirken hata olustu."));
@@ -296,7 +209,7 @@ export default function DashboardPage() {
           </section>
 
           <section className="grid gap-4 xl:grid-cols-2">
-            <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
+            <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
               <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Son Eklenen Quizler</h2>
               {latestQuizzes.length === 0 ? (
                 <p className="text-sm text-stone-500 dark:text-stone-400">Quiz verisi bulunamadi.</p>
@@ -324,7 +237,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
+            <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
               <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Son Eklenen Sorular</h2>
               {latestQuestions.length === 0 ? (
                 <p className="text-sm text-stone-500 dark:text-stone-400">Soru verisi bulunamadi.</p>
@@ -397,7 +310,7 @@ export default function DashboardPage() {
 
           {isAdmin ? (
             <section className="grid gap-4 xl:grid-cols-2">
-              <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
+              <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
                 <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Rol Dagilimi</h2>
                 {roleDistribution.length === 0 ? (
                   <p className="text-sm text-stone-500 dark:text-stone-400">Rol dagilimi verisi alinamadi.</p>

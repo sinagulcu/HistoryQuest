@@ -1,5 +1,6 @@
 import api from "./axios";
 import type { Question, QuestionCreateDto, QuestionUpdateDto } from "@/types/question.types";
+import { normalizeServerDateString } from "@/utils/dateTime";
 import { toDifficultyLevel, toDifficultyName, unwrapApiData } from "./apiUtils";
 
 const normalizeQuestion = (raw: unknown): Question => {
@@ -20,7 +21,7 @@ const normalizeQuestion = (raw: unknown): Question => {
         : typeof item.createdByTeacherName === "string"
           ? item.createdByTeacherName
           : undefined,
-    createdAt: typeof item.createdAt === "string" ? item.createdAt : undefined,
+    createdAt: normalizeServerDateString(typeof item.createdAt === "string" ? item.createdAt : undefined),
     options: optionsRaw.map((option) => {
       const optionRecord = unwrapApiData<Record<string, unknown>>(option);
       return {
@@ -61,6 +62,14 @@ const toQuestionUpdatePayload = (data: QuestionUpdateDto) => ({
 
 export const questionApi = {
   getAll: async () => {
+    // Backend now supports listing all questions for Teacher/Admin.
+    const response = await api.get("/Questions");
+    return {
+      ...response,
+      data: normalizeQuestionList(response.data),
+    };
+  },
+  getMine: async () => {
     const response = await api.get("/Questions/getmyquestions");
     return {
       ...response,

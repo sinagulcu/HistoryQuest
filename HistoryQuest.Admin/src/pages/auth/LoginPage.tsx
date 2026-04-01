@@ -1,17 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { authApi, getApiErrorMessage } from "@/api/auth.api";
-import api from "@/api/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Label from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
-import type { AuthUser } from "@/types/auth.types";
 import { loginSchema, type LoginFormValues } from "@/utils/validators";
 
 interface LocationState {
@@ -20,27 +17,11 @@ interface LocationState {
   };
 }
 
-interface LoginDebugState {
-  endpoint: string;
-  payload: {
-    userNameOrEmail: string;
-    passwordLength: number;
-  };
-  requestTime: string;
-  status?: number;
-  ok: boolean;
-  message: string;
-  responseData?: unknown;
-}
-
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, login, logout } = useAuth();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugState, setDebugState] = useState<LoginDebugState | null>(null);
-  const [testingConnection, setTestingConnection] = useState(false);
 
   const {
     register,
@@ -71,41 +52,11 @@ export default function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setSubmitError(null);
 
-    const debugPayload = {
-      userNameOrEmail: values.identifier.trim(),
-      passwordLength: values.password.length,
-    };
-
-    setDebugState({
-      endpoint: `${import.meta.env.VITE_API_BASE_URL || "https://localhost:7086/api"}/Auth/login`,
-      payload: debugPayload,
-      requestTime: new Date().toISOString(),
-      ok: false,
-      message: "Istek gonderildi",
-    });
-
     try {
       const { data } = await authApi.login({
         identifier: values.identifier,
         password: values.password,
       });
-
-      setDebugState((prev) =>
-        prev
-          ? {
-              ...prev,
-              ok: true,
-              status: 200,
-              message: "Login basarili",
-              responseData: {
-                userId: data.user.id,
-                userName: data.user.userName,
-                role: data.user.role,
-                hasToken: Boolean(data.token || data.accessToken),
-              },
-            }
-          : prev
-      );
 
       if (data.user.role === "Student") {
         setSubmitError("Bu panel sadece öğretmenler ve yöneticiler içindir");
@@ -125,75 +76,7 @@ export default function LoginPage() {
       const errorMessage = getApiErrorMessage(error, "Giris basarisiz. Bilgilerinizi kontrol ediniz.");
       setSubmitError(errorMessage);
       toast.error(errorMessage);
-
-      if (axios.isAxiosError(error)) {
-        setDebugState((prev) =>
-          prev
-            ? {
-                ...prev,
-                status: error.response?.status,
-                ok: false,
-                message: errorMessage,
-                responseData: error.response?.data,
-              }
-            : prev
-        );
-      } else {
-        setDebugState((prev) =>
-          prev
-            ? {
-                ...prev,
-                ok: false,
-                message: errorMessage,
-              }
-            : prev
-        );
-      }
     }
-  };
-
-  const handleConnectionTest = async () => {
-    setTestingConnection(true);
-    try {
-      const response = await api.get("/Test/public", { skipAuth: true });
-      toast.success("API baglanti testi basarili");
-      setDebugState((prev) => ({
-        endpoint: `${import.meta.env.VITE_API_BASE_URL || "https://localhost:7086/api"}/Test/public`,
-        payload: prev?.payload || { userNameOrEmail: "-", passwordLength: 0 },
-        requestTime: new Date().toISOString(),
-        status: response.status,
-        ok: true,
-        message: "API erisilebilir",
-        responseData: response.data,
-      }));
-    } catch (error) {
-      const message = getApiErrorMessage(error, "API baglanti testi basarisiz");
-      toast.error(message);
-      setDebugState((prev) => ({
-        endpoint: `${import.meta.env.VITE_API_BASE_URL || "https://localhost:7086/api"}/Test/public`,
-        payload: prev?.payload || { userNameOrEmail: "-", passwordLength: 0 },
-        requestTime: new Date().toISOString(),
-        status: axios.isAxiosError(error) ? error.response?.status : undefined,
-        ok: false,
-        message,
-        responseData: axios.isAxiosError(error) ? error.response?.data : undefined,
-      }));
-    } finally {
-      setTestingConnection(false);
-    }
-  };
-
-  const handleDevAdminLogin = () => {
-    const devAdminUser: AuthUser = {
-      id: "dev-admin-local",
-      userName: "Local Admin",
-      email: "local-admin@historyquest.dev",
-      role: "Admin",
-    };
-
-    login("dev-local-bypass-token", devAdminUser);
-    toast.success("Geliştirme girişi ile admin oturumu açıldı");
-    navigate("/dashboard", { replace: true });
   };
 
   return (
@@ -253,50 +136,7 @@ export default function LoginPage() {
                   "Giris Yap"
                 )}
               </Button>
-
-              <Button type="button" variant="outline" className="w-full" onClick={handleDevAdminLogin}>
-                Sunucu Kapaliysa Dev Admin ile Giris Yap
-              </Button>
-
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Button type="button" variant="outline" onClick={handleConnectionTest} disabled={testingConnection}>
-                  {testingConnection ? "Baglanti test ediliyor..." : "API Baglanti Testi"}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setShowDebug((prev) => !prev)}>
-                  {showDebug ? "Debug Gizle" : "Debug Goster"}
-                </Button>
-              </div>
-
-              {showDebug ? (
-                <div className="rounded-lg border border-stone-200 bg-stone-100/70 p-3 text-xs text-stone-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300">
-                  <p>
-                    <strong>Endpoint:</strong> {debugState?.endpoint || "-"}
-                  </p>
-                  <p>
-                    <strong>Istek Zamani:</strong> {debugState?.requestTime || "-"}
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {debugState?.status ?? "-"}
-                  </p>
-                  <p>
-                    <strong>Mesaj:</strong> {debugState?.message || "-"}
-                  </p>
-                  <p>
-                    <strong>Kullanici:</strong> {debugState?.payload.userNameOrEmail || "-"}
-                  </p>
-                  <p>
-                    <strong>Sifre Uzunlugu:</strong> {debugState?.payload.passwordLength ?? "-"}
-                  </p>
-                  <pre className="mt-2 max-h-40 overflow-auto rounded border border-stone-300/70 bg-stone-50 p-2 text-[11px] dark:border-stone-700 dark:bg-stone-950/80">
-                    {JSON.stringify(debugState?.responseData ?? {}, null, 2)}
-                  </pre>
-                </div>
-              ) : null}
             </form>
-
-            <p className="mt-3 text-center text-xs text-[#8f6d28] dark:text-[#d7be80]">
-              Gecici test girisidir. Is bittiginde kaldirilmalidir.
-            </p>
           </div>
         </div>
       </div>

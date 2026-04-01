@@ -68,7 +68,6 @@ export default function ChallengeCreatePage() {
     try {
       await challengeApi.create({
         ...values,
-        scheduledAt: new Date(values.scheduledAt).toISOString(),
       });
       toast.success("Sureli meydan okuma planlandi");
       navigate("/challenges");

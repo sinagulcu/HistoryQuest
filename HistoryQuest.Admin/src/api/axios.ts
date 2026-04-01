@@ -32,7 +32,7 @@ api.interceptors.request.use(
     }
 
     const token = localStorage.getItem("historyquest_token");
-    if (token && token !== "dev-local-bypass-token") {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -48,7 +48,6 @@ api.interceptors.response.use(
     const skipAuthRedirect = Boolean(error.config?.skipAuth);
     const autoLogoutOn401 = Boolean(error.config?.autoLogoutOn401);
     const isAuthEndpoint = requestUrl.toLowerCase().includes("/auth/login") || requestUrl.toLowerCase().includes("/auth/register");
-    const currentToken = localStorage.getItem("historyquest_token");
 
     if (error.response?.status === 401) {
       if (skipAuthRedirect) {
@@ -57,11 +56,6 @@ api.interceptors.response.use(
 
       // Login/register 401 response should be handled by the page itself.
       if (isAuthEndpoint) {
-        return Promise.reject(error);
-      }
-
-      // Local dev bypass must not force hard redirect loops.
-      if (currentToken === "dev-local-bypass-token") {
         return Promise.reject(error);
       }
 

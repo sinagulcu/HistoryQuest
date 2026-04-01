@@ -21,6 +21,10 @@ public class HistoryQuestDbContext : DbContext
     public DbSet<QuizAttempt> QuizAttempts => Set<QuizAttempt>();
     public DbSet<AttemptAnswer> AttemptAnswers => Set<AttemptAnswer>();
 
+    public DbSet<Category> Categories => Set<Category>();
+
+    public DbSet<TimedChallenge> TimedChallenges => Set<TimedChallenge>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<QuizQuestion>()

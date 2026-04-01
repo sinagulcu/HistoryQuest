@@ -1,5 +1,6 @@
 import api from "./axios";
 import type { Quiz, QuizCreateDto, QuizUpdateDto } from "@/types/quiz.types";
+import { normalizeServerDateString } from "@/utils/dateTime";
 import { toDifficultyLevel, unwrapApiData } from "./apiUtils";
 
 const normalizeQuiz = (raw: unknown): Quiz => {
@@ -22,7 +23,7 @@ const normalizeQuiz = (raw: unknown): Quiz => {
         : typeof item.createdByTeacherName === "string"
           ? item.createdByTeacherName
           : undefined,
-    createdAt: typeof item.createdAt === "string" ? item.createdAt : undefined,
+    createdAt: normalizeServerDateString(typeof item.createdAt === "string" ? item.createdAt : undefined),
     questions: questionsRaw.map((question) => {
       const q = unwrapApiData<Record<string, unknown>>(question);
       return {

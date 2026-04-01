@@ -1,6 +1,6 @@
 import type { Question } from "@/types/question.types";
 
-export type ChallengeStatus = "Draft" | "Scheduled" | "Active" | "Completed" | "Cancelled";
+export type ChallengeStatus = "Scheduled" | "Active" | "Expired";
 
 export interface Challenge {
   id: string;
@@ -8,17 +8,16 @@ export interface Challenge {
   questionId: string;
   questionText?: string;
   question?: Question;
-  scheduledAt: string;
-  scoringDurationMinutes: number;
-  lateDurationMinutes: number;
+  scheduledAtUtc: string;
+  answerWindowSeconds: number;
+  visibilityWindowSeconds: number;
   maxScore: number;
   showCorrectAnswerOnWrong: boolean;
   showExplanationOnWrong: boolean;
-  explanation?: string;
   notifyAllStudents: boolean;
-  status?: ChallengeStatus;
-  createdByUserId: string;
-  createdByUserName?: string;
+  status: ChallengeStatus;
+  createdByTeacherId: string;
+  createdByTeacherName?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -32,7 +31,6 @@ export interface ChallengeCreateDto {
   maxScore: number;
   showCorrectAnswerOnWrong: boolean;
   showExplanationOnWrong: boolean;
-  explanation?: string;
   notifyAllStudents: boolean;
 }
 

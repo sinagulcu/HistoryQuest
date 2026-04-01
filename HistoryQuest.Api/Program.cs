@@ -1,7 +1,10 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using HistoryQuest.Api.Middleware;
+using HistoryQuest.Application;
 using HistoryQuest.Application.Auth.UseCases;
+using HistoryQuest.Application.Categories.UseCases;
+using HistoryQuest.Application.Challenges.UseCases;
 using HistoryQuest.Infrastructure;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,7 +20,9 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "http://localhost:5173",
-                "http://localhost:5174"
+                "http://localhost:5174",
+                "https://localhost:5173",
+                "https://localhost:5174"
               )
               .AllowAnyHeader()
               .AllowAnyMethod();
@@ -68,9 +73,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterUserCommand>();
 builder.Services.AddFluentValidationAutoValidation();
 
-builder.Services.AddScoped<RegisterUserCommand>();
-builder.Services.AddScoped<LoginUserQuery>();
-
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthentication(options =>
