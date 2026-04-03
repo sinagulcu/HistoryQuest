@@ -18,8 +18,14 @@ public class DeleteQuestionCommand
         if (question == null)
             throw new NotFoundException("Question not found.");
 
-        question.DeleteByUser(userId, isAdmin);
+        if (!isAdmin && question.CreatedByTeacherId != userId)
+            throw new UnauthorizedException("You do not have permission to delete this question.");
 
+        var usage = await _questionRepository.GetDeleteUsageAsync(questionId);
+        if (!usage.CanDelete)
+            throw new BusinessRuleException(usage.Message);
+
+        question.DeleteByUser(userId, isAdmin);
         await _questionRepository.SaveChangesAsync();
     }
 }

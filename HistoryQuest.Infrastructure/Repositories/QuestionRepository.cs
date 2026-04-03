@@ -106,7 +106,29 @@ public class QuestionRepository : IQuestionRepository
     {
         return await _context.Questions
             .Include(q => q.Options)
+            .Include(q => q.Category)
+            .Include(q => q.CreatedByTeacher)
             .FirstOrDefaultAsync(q => q.Id == id);
+    }
+
+    public async Task<QuestionDeleteUsageDto> GetDeleteUsageAsync(Guid questionId, CancellationToken cancellationToken = default)
+    {
+        var activeQuizUsageCount = await _context.QuizQuestions
+            .Where(qq => qq.QuestionId == questionId)
+            .Where(qq => !qq.Quiz.IsDeleted)
+            .CountAsync(cancellationToken);
+
+        var activeChallengeUsageCount = await _context.TimedChallenges
+            .Where(c => c.QuestionId == questionId)
+            .Where(c => !c.IsDeleted)
+            .CountAsync(cancellationToken);
+
+        return new QuestionDeleteUsageDto
+        {
+            QuestionId = questionId,
+            ActiveQuizUsageCount = activeQuizUsageCount,
+            ActiveChallengeUsageCount = activeChallengeUsageCount
+        };
     }
 
     public async Task SaveChangesAsync()

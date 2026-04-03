@@ -12,5 +12,6 @@ public interface IQuestionRepository
     Task<List<Question>> GetByTeacherIdAsync(Guid teacherId, bool includeDeleted = false);
     Task<List<QuestionListItemDto>> GetAllForAdminPanelAsync(bool included = false);
     Task<Question?> GetByIdIncludingDeletedAsync(Guid id);
+    Task<QuestionDeleteUsageDto> GetDeleteUsageAsync(Guid questionId, CancellationToken cancellationToken = default);
     Task SaveChangesAsync();
 }

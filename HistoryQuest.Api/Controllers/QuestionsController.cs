@@ -19,6 +19,7 @@ public class QuestionsController : ControllerBase
     private readonly DeleteQuestionCommand _deleteQuestionCommand;
     private readonly RestoreQuestCommand _restoreQuestionCommand;
     private readonly GetAllQuestionsCommand _getAllQuestionsCommand;
+    private readonly GetQuestionDeleteUsageQuery _getQuestionDeleteUsageQuery;
 
     public QuestionsController(
         CreateQuestionCommand command, 
@@ -27,7 +28,8 @@ public class QuestionsController : ControllerBase
         UpdateQuestionCommand updateQuestionCommand, 
         DeleteQuestionCommand deleteQuestionCommand,
         RestoreQuestCommand restoreQuestCommand,
-        GetAllQuestionsCommand getAllQuestionsCommand)
+        GetAllQuestionsCommand getAllQuestionsCommand,
+        GetQuestionDeleteUsageQuery getQuestionDeleteUsageQuery)
     {
         _command = command;
         _getQuestionByIdQuery = getQuestionByIdQuery;
@@ -36,6 +38,7 @@ public class QuestionsController : ControllerBase
         _deleteQuestionCommand = deleteQuestionCommand;
         _restoreQuestionCommand = restoreQuestCommand;
         _getAllQuestionsCommand = getAllQuestionsCommand;
+        _getQuestionDeleteUsageQuery = getQuestionDeleteUsageQuery;
     }
 
     [HttpPost]
@@ -141,6 +144,18 @@ public class QuestionsController : ControllerBase
         {
             return NotFound();
         }
+        catch (BusinessRuleException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("{id:guid}/delete-usage")]
+    [Authorize(Roles = "Admin,Teacher")]
+    public async Task<IActionResult> GetDeleteUsage(Guid id)
+    {
+        var usage = await _getQuestionDeleteUsageQuery.ExecuteAsync(id);
+        return Ok(usage);
     }
 
     [HttpPatch("restore/{id}")]

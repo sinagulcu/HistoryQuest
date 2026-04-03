@@ -1,4 +1,5 @@
-﻿using HistoryQuest.Infrastructure.Persistence;
+﻿using HistoryQuest.Domain.Entities;
+using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace HistoryQuest.Infrastructure.Services.CleanUp;
@@ -48,6 +49,10 @@ public sealed class QuestionHardDeletePolicy : IHardDeletePolicy
 
         if (finalQuestionIds.Count == 0)
             return 0;
+
+        await db.Set<QuestionOption>()
+            .Where(o => finalQuestionIds.Contains(o.Id))
+            .ExecuteDeleteAsync(ct);
 
         var deleted = await db.Questions
             .Where(q => finalQuestionIds.Contains(q.Id))

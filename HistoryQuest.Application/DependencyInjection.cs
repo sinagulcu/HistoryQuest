@@ -42,6 +42,7 @@ public static class DependencyInjection
         services.AddScoped<GetMyQuestionsCommand>();
         services.AddScoped<UpdateQuestionCommand>();
         services.AddScoped<RestoreQuestCommand>();
+        services.AddScoped<GetQuestionDeleteUsageQuery>();
 
         services.AddScoped<CreateQuizCommand>();
         services.AddScoped<UpdateQuizCommand>();
