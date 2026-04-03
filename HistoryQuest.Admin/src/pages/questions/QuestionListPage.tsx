@@ -4,7 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { categoryApi } from "@/api/category.api";
+import { challengeApi } from "@/api/challenge.api";
 import { questionApi } from "@/api/question.api";
+import { quizApi } from "@/api/quiz.api";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
@@ -37,6 +39,8 @@ export default function QuestionListPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<Question | null>(null);
+  const [deleteGuardMessage, setDeleteGuardMessage] = useState<string | null>(null);
+  const [deleteGuardLoading, setDeleteGuardLoading] = useState(false);
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -150,6 +154,51 @@ export default function QuestionListPage() {
     }
   };
 
+  const checkQuestionUsageBeforeDelete = async (question: Question) => {
+    setDeleteGuardLoading(true);
+    setDeleteGuardMessage(null);
+
+    try {
+      const [challengeResponse, quizResponse] = await Promise.all([challengeApi.getAll(), quizApi.getAll()]);
+
+      const challengeUsages = challengeResponse.data.filter((challenge) => challenge.questionId === question.id);
+
+      const quizDetails = await Promise.allSettled(quizResponse.data.map((quiz) => quizApi.getById(quiz.id)));
+      const quizUsages = quizDetails
+        .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof quizApi.getById>>> => result.status === "fulfilled")
+        .map((result) => result.value.data)
+        .filter((quiz) => quiz.questions?.some((quizQuestion) => quizQuestion.id === question.id));
+
+      if (challengeUsages.length === 0 && quizUsages.length === 0) {
+        setPendingDeleteQuestion(question);
+        return;
+      }
+
+      const quizNames = quizUsages.map((quiz) => quiz.title).filter(Boolean);
+      const challengeNames = challengeUsages.map((challenge) => challenge.title).filter(Boolean);
+
+      const parts: string[] = [];
+      if (quizNames.length > 0) {
+        parts.push(`Quizlerde kullaniliyor: ${quizNames.join(", ")}`);
+      }
+      if (challengeNames.length > 0) {
+        parts.push(`Meydan okumalarda kullaniliyor: ${challengeNames.join(", ")}`);
+      }
+
+      setDeleteGuardMessage(
+        `Bu soru diger kayitlarda kullaniliyor. Once ilgili kayitlardan soruyu kaldirip veya o kayitlari silip tekrar deneyin.\n\n${parts.join("\n")}`
+      );
+    } catch (requestError) {
+      const message =
+        axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
+          ? requestError.response.data.message
+          : "Soru bagimliliklari kontrol edilirken hata olustu.";
+      toast.error(message);
+    } finally {
+      setDeleteGuardLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageSection
@@ -250,7 +299,7 @@ export default function QuestionListPage() {
                             </Button>
                             <Button
                               variant="danger"
-                              onClick={() => setPendingDeleteQuestion(question)}
+                              onClick={() => checkQuestionUsageBeforeDelete(question)}
                               disabled={deletingId === question.id}
                               className="gap-2"
                             >
@@ -323,6 +372,26 @@ export default function QuestionListPage() {
           if (pendingDeleteQuestion) {
             handleDelete(pendingDeleteQuestion);
           }
+        }}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteGuardMessage) || deleteGuardLoading}
+        title="Soru Silme Kontrolu"
+        description={
+          deleteGuardLoading
+            ? "Soru bagimliliklari kontrol ediliyor..."
+            : deleteGuardMessage || ""
+        }
+        cancelLabel="Tamam"
+        showConfirmButton={false}
+        onCancel={() => {
+          setDeleteGuardLoading(false);
+          setDeleteGuardMessage(null);
+        }}
+        onConfirm={() => {
+          setDeleteGuardLoading(false);
+          setDeleteGuardMessage(null);
         }}
       />
     </div>

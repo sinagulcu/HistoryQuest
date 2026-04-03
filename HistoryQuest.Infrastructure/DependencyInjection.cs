@@ -9,6 +9,7 @@ using HistoryQuest.Infrastructure.Persistence;
 using HistoryQuest.Infrastructure.Repositories;
 using HistoryQuest.Infrastructure.Security;
 using HistoryQuest.Infrastructure.Services;
+using HistoryQuest.Infrastructure.Services.CleanUp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,10 +37,16 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
-
-        services.AddScoped<RefreshTokenCleanupService>();
         services.AddScoped<RefreshTokenCleanupHostedService>();
-        services.AddHostedService<QuestionCleanupService>();
+
+        services.Configure<HardDeleteOptions>(configuration.GetSection("HardDelete"));
+
+        services.AddSingleton<IHardDeletePolicy, QuestionHardDeletePolicy>();
+        services.AddSingleton<IHardDeletePolicy, QuizHardDeletePolicy>();
+        services.AddSingleton<IHardDeletePolicy, CategoryHardDeletePolicy>();
+        services.AddSingleton<IHardDeletePolicy, TimedChallengeHardDeletePolicy>();
+
+        services.AddHostedService<HardDeleteCleanupService>();
 
         services.AddScoped<IUserReadRepository, UserReadRepository>();
 

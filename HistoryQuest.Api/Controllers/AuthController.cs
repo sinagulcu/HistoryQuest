@@ -16,7 +16,7 @@ public class AuthController : ControllerBase
     private readonly LoginUserQuery _loginUserQuery;
     private readonly LogoutCommand _logoutCommand;
     private readonly RefreshTokenCommand _refreshTokenCommand;
-    private readonly RefreshTokenCleanupService _refreshTokenCleanupService;
+    private readonly IRefreshTokenCleanupService _refreshTokenCleanupService;
     private readonly IUserRepository _userRepository;
     private readonly ChangeUserRoleCommand _changeUserRoleCommand;
 
@@ -25,7 +25,7 @@ public class AuthController : ControllerBase
         LoginUserQuery loginUserQuery,
         LogoutCommand logoutCommand,
         RefreshTokenCommand refreshTokenCommand,
-        RefreshTokenCleanupService refreshTokenCleanupService,
+        IRefreshTokenCleanupService refreshTokenCleanupService,
         IUserRepository userRepository,
         ChangeUserRoleCommand changeUserRoleCommand)
     {
