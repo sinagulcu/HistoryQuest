@@ -43,7 +43,17 @@ const normalizeQuestion = (raw: unknown): Question => {
         ? item.createdAt
         : typeof item.CreatedAt === "string"
           ? item.CreatedAt
-          : undefined
+          : typeof item.createdAtUtc === "string"
+            ? item.createdAtUtc
+            : typeof item.CreatedAtUtc === "string"
+              ? item.CreatedAtUtc
+              : typeof item.createdDate === "string"
+                ? item.createdDate
+                : typeof item.createdOn === "string"
+                  ? item.createdOn
+                  : typeof item.created === "string"
+                    ? item.created
+                    : undefined
     ),
     options: optionsRaw.map((option) => {
       const optionRecord = unwrapApiData<Record<string, unknown>>(option);
@@ -66,6 +76,10 @@ const normalizeQuestionList = (raw: unknown): Question[] => {
 
 const toQuestionCreatePayload = (data: QuestionCreateDto) => ({
   text: data.text,
+  categoryId: data.categoryId,
+  // Backend farklı sözleşmelerde enum adı bekleyebiliyor.
+  difficulty: toDifficultyName(data.difficultyLevel),
+  difficultyLevel: data.difficultyLevel,
   options: data.options.map((option) => ({
     text: option.text,
     isCorrect: option.isCorrect,
@@ -74,7 +88,9 @@ const toQuestionCreatePayload = (data: QuestionCreateDto) => ({
 
 const toQuestionUpdatePayload = (data: QuestionUpdateDto) => ({
   text: data.text,
+  categoryId: data.categoryId,
   difficulty: toDifficultyName(data.difficultyLevel),
+  difficultyLevel: data.difficultyLevel,
   explanation: "",
   options: data.options.map((option) => ({
     id: option.id,

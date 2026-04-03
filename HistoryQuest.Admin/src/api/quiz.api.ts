@@ -22,7 +22,13 @@ const normalizeQuiz = (raw: unknown): Quiz => {
       : null;
   const createdByValue = item.createdByUserId ?? item.createdByTeacherId ?? item.teacherId ?? item.TeacherId;
   const timeLimitSource =
-    item.timeLimitMinutes ?? item.TimeLimitMinutes ?? item.durationInMinutes ?? item.DurationInMinutes ?? item.timeLimit;
+    item.timeLimitMinutes ??
+    item.TimeLimitMinutes ??
+    item.timedLimitMinutes ??
+    item.TimedLimitMinutes ??
+    item.durationInMinutes ??
+    item.DurationInMinutes ??
+    item.timeLimit;
 
   return {
     id: String(item.id ?? item.quizId ?? item.Id ?? ""),
@@ -42,7 +48,11 @@ const normalizeQuiz = (raw: unknown): Quiz => {
           ? item.CategoryName
           : typeof item.categoryTitle === "string"
             ? item.categoryTitle
-          : undefined,
+            : typeof item.quizCategoryName === "string"
+              ? item.quizCategoryName
+              : typeof item.QuizCategoryName === "string"
+                ? item.QuizCategoryName
+                : undefined,
     difficultyLevel: toDifficultyLevel(difficultySource),
     timeLimitMinutes: typeof timeLimitSource === "number" ? timeLimitSource : Number(timeLimitSource ?? 0) || 0,
     isPublished:
@@ -57,8 +67,16 @@ const normalizeQuiz = (raw: unknown): Quiz => {
         ? item.createdByUserName
         : typeof item.createdByTeacherFullName === "string"
           ? item.createdByTeacherFullName
-          : typeof item.createdByTeacherUserName === "string"
+            : typeof item.createdByTeacherUserName === "string"
             ? item.createdByTeacherUserName
+            : typeof item.createdTeacherFullName === "string"
+              ? item.createdTeacherFullName
+            : typeof item.CreatedTeacherFullName === "string"
+              ? item.CreatedTeacherFullName
+            : typeof item.createdTeacherUserName === "string"
+              ? item.createdTeacherUserName
+            : typeof item.CreatedTeacherUserName === "string"
+              ? item.CreatedTeacherUserName
         : typeof item.createdByTeacherName === "string"
           ? item.createdByTeacherName
             : typeof item.createdByName === "string"
@@ -75,7 +93,17 @@ const normalizeQuiz = (raw: unknown): Quiz => {
         ? item.createdAt
         : typeof item.CreatedAt === "string"
           ? item.CreatedAt
-          : undefined
+          : typeof item.createdAtUtc === "string"
+            ? item.createdAtUtc
+            : typeof item.CreatedAtUtc === "string"
+              ? item.CreatedAtUtc
+              : typeof item.createdDate === "string"
+                ? item.createdDate
+                : typeof item.createdOn === "string"
+                  ? item.createdOn
+                  : typeof item.created === "string"
+                    ? item.created
+                    : undefined
     ),
     questionCount:
       typeof item.questionCount === "number"

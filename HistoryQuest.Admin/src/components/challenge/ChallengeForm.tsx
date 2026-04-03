@@ -88,14 +88,14 @@ export default function ChallengeForm({
     <>
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="title">Meydan Okuma Basligi</Label>
-          <Input id="title" placeholder="Ornek: Haftanin hiz sorusu" {...register("title")} />
+          <Label htmlFor="title">Meydan Okuma Başlığı</Label>
+          <Input id="title" placeholder="Örnek: Haftanın hız sorusu" {...register("title")} />
           {errors.title ? <p className="text-xs text-red-600">{errors.title.message}</p> : null}
         </div>
 
         <section className="space-y-4 rounded-md border border-stone-200 p-4 dark:border-stone-800">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Soru Secimi</h2>
+              <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-100">Soru Seçimi</h2>
             <Button type="button" variant="outline" onClick={() => setQuestionModalOpen(true)} className="gap-2">
               <Plus className="h-4 w-4" />
               Soru Ekle
@@ -109,11 +109,11 @@ export default function ChallengeForm({
                 checked={questionMode === "existing"}
                 onChange={() => setQuestionMode("existing")}
               />
-              Hazir sorularimdan sec
+              Hazır sorularımdan seç
             </label>
             <label className="inline-flex items-center gap-2 text-stone-700 dark:text-stone-200">
               <input type="radio" checked={questionMode === "new"} onChange={() => setQuestionMode("new")} />
-              Yeni soru yaz ve ekle
+               Yeni soru yaz ve ekle
             </label>
           </div>
 
@@ -125,7 +125,7 @@ export default function ChallengeForm({
                 className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
                 {...register("questionId")}
               >
-                <option value="">Soru seciniz</option>
+                <option value="">Soru seçiniz</option>
                 {questions.map((question) => (
                   <option key={question.id} value={question.id}>
                     {question.text.length > 90 ? `${question.text.slice(0, 90)}...` : question.text}
@@ -136,20 +136,20 @@ export default function ChallengeForm({
             </div>
           ) : (
             <div className="rounded-md border border-dashed border-stone-300 p-3 text-sm text-stone-600 dark:border-stone-700 dark:text-stone-300">
-              Yeni soru eklemek icin "Soru Ekle" butonunu kullanin. Kaydedilen soru otomatik olarak sorulariniza da eklenir.
+              Yeni soru eklemek için "Soru Ekle" butonunu kullanın. Kaydedilen soru otomatik olarak sorularınıza da eklenir.
             </div>
           )}
 
           {selectedQuestion ? (
             <div className="rounded-md border border-[#d8c08a]/50 bg-[#f8f2e5] p-3 text-sm text-stone-700 dark:border-[#786436] dark:bg-[#2b2315] dark:text-stone-200">
-              Secili soru: {selectedQuestion.text}
+              Seçili soru: {selectedQuestion.text}
             </div>
           ) : null}
         </section>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="scheduledAt">Planlanan Baslangic</Label>
+            <Label htmlFor="scheduledAt">Planlanan Başlangıç</Label>
             <Input id="scheduledAt" type="datetime-local" {...register("scheduledAt")} />
             {errors.scheduledAt ? <p className="text-xs text-red-600">{errors.scheduledAt.message}</p> : null}
           </div>
@@ -159,7 +159,7 @@ export default function ChallengeForm({
             {errors.maxScore ? <p className="text-xs text-red-600">{errors.maxScore.message}</p> : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="scoringDurationMinutes">Puanli Sure (dakika)</Label>
+            <Label htmlFor="scoringDurationMinutes">Puanlı Süre (dakika)</Label>
             <Input
               id="scoringDurationMinutes"
               type="number"
@@ -171,7 +171,7 @@ export default function ChallengeForm({
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lateDurationMinutes">Puan Disi Ek Sure (dakika)</Label>
+            <Label htmlFor="lateDurationMinutes">Puan Dışı Ek Süre (dakika)</Label>
             <Input
               id="lateDurationMinutes"
               type="number"
@@ -183,12 +183,12 @@ export default function ChallengeForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="explanation">Soru Aciklamasi (yanlis cevapta gosterilir)</Label>
+          <Label htmlFor="explanation">Soru Açıklaması (yanlış cevapta gösterilir)</Label>
           <textarea
             id="explanation"
             rows={4}
             className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
-            placeholder="Ogrencinin yanlis cevap sonrasi gorecegi aciklama"
+            placeholder="Öğrencinin yanlış cevap sonrası göreceği açıklama"
             {...register("explanation")}
           />
           {errors.explanation ? <p className="text-xs text-red-600">{errors.explanation.message}</p> : null}
@@ -197,24 +197,24 @@ export default function ChallengeForm({
         <div className="grid gap-3 md:grid-cols-3">
           <label className="inline-flex items-center gap-2 rounded-md border border-stone-200 p-3 text-sm dark:border-stone-800">
             <input type="checkbox" {...register("showCorrectAnswerOnWrong")} />
-            Yanlis cevapta dogru sikki goster
+            Yanlış cevapta doğru şıkkı göster
           </label>
           <label className="inline-flex items-center gap-2 rounded-md border border-stone-200 p-3 text-sm dark:border-stone-800">
             <input type="checkbox" {...register("showExplanationOnWrong")} />
-            Yanlis cevapta aciklamayi goster
+            Yanlış cevapta açıklamayı göster
           </label>
           <label className="inline-flex items-center gap-2 rounded-md border border-stone-200 p-3 text-sm dark:border-stone-800">
             <input type="checkbox" {...register("notifyAllStudents")} />
-            Planlanan saatte tum ogrencilere bildirim gonder
+            Planlanan saatte tüm öğrencilere bildirim gönder
           </label>
         </div>
 
         <div className="flex gap-2">
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Kaydediliyor..." : "Meydan Okumayi Kaydet"}
+             {isSubmitting ? "Kaydediliyor..." : "Meydan Okumayı Kaydet"}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
-            Iptal
+            İptal
           </Button>
         </div>
       </form>
@@ -226,7 +226,7 @@ export default function ChallengeForm({
             <QuestionForm
               categories={categories}
               isSubmitting={isCreatingQuestion}
-              submitLabel="Soruyu Olustur"
+              submitLabel="Soruyu Oluştur"
               onSubmit={handleCreateQuestion}
               onCancel={() => setQuestionModalOpen(false)}
             />

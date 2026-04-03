@@ -27,23 +27,31 @@ public class HistoryQuestDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Quiz>()
-            .HasOne(q => q.CreatedByTeacher)
-            .WithMany()
-            .HasForeignKey(q => q.CreatedByTeacherId)
-            .OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<Question>(builder =>
+        {
+            builder.HasOne(q => q.CreatedByTeacher)
+                .WithMany()
+                .HasForeignKey(q => q.CreatedByTeacherId)
+                .OnDelete(DeleteBehavior.NoAction);
 
-        modelBuilder.Entity<Quiz>()
-            .HasOne(q => q.Category)
-            .WithMany()
-            .HasForeignKey(q => q.CategoryId)
-            .OnDelete(DeleteBehavior.NoAction);
+            builder.HasOne(q => q.Category)
+                .WithMany()
+                .HasForeignKey(q => q.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
 
-        modelBuilder.Entity<Question>()
-            .HasOne(q => q.Category)
-            .WithMany()
-            .HasForeignKey(q => q.CategoryId)
-            .OnDelete(DeleteBehavior.NoAction);
+        modelBuilder.Entity<Quiz>(builder =>
+        {
+            builder.HasOne(q => q.CreatedByTeacher)
+                .WithMany()
+                .HasForeignKey(q => q.CreatedByTeacherId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.HasOne(q => q.Category)
+                .WithMany()
+                .HasForeignKey(q => q.CategoryId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
 
         modelBuilder.Entity<QuizQuestion>()
             .HasKey(qq => new { qq.QuizId, qq.QuestionId });
@@ -51,12 +59,14 @@ public class HistoryQuestDbContext : DbContext
         modelBuilder.Entity<QuizQuestion>()
             .HasOne(qq => qq.Quiz)
             .WithMany(q => q.QuizQuestions)
-            .HasForeignKey(qq => qq.QuizId);
+            .HasForeignKey(qq => qq.QuizId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<QuizQuestion>()
             .HasOne(qq => qq.Question)
             .WithMany()
-            .HasForeignKey(qq => qq.QuestionId);
+            .HasForeignKey(qq => qq.QuestionId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HistoryQuestDbContext).Assembly);
         base.OnModelCreating(modelBuilder);

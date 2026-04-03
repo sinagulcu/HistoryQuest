@@ -66,14 +66,14 @@ export default function LoginPage() {
 
       const authToken = data.token || data.accessToken;
       if (!authToken) {
-        throw new Error("Token bulunamadi");
+        throw new Error("Token bulunamadi.");
       }
 
       login(authToken, data.user);
       toast.success("Giriş başarılı");
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      const errorMessage = getApiErrorMessage(error, "Giris basarisiz. Bilgilerinizi kontrol ediniz.");
+      const errorMessage = getApiErrorMessage(error, "Giriş başarısız. Bilgilerinizi kontrol edin.");
       setSubmitError(errorMessage);
       toast.error(errorMessage);
     }
@@ -86,24 +86,24 @@ export default function LoginPage() {
       <div className="hq-fade-in w-full max-w-5xl overflow-hidden rounded-3xl border border-stone-200/70 bg-stone-50/90 shadow-2xl backdrop-blur-xl dark:border-stone-800 dark:bg-stone-950/70">
         <div className="grid md:grid-cols-2">
           <div className="hidden bg-[linear-gradient(145deg,#5c4618_0%,#8b6b29_45%,#c8a55a_100%)] p-10 text-white md:block">
-            <p className="inline-flex rounded-full border border-white/40 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]">
-              HistoryQuest
+              <p className="inline-flex rounded-full border border-white/40 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]">
+                Tarih Pusulası
             </p>
-            <h1 className="mt-6 text-3xl font-semibold leading-tight">Tarih Egitimi Yonetim Paneli</h1>
+              <h1 className="mt-6 text-3xl font-semibold leading-tight">Tarih Pusulası</h1>
             <p className="mt-4 text-sm text-white/85">
-              Quiz, soru ve oyunlastirma akisini tek panelden yonetin. Ogretmen ve admin odakli hizli yonetim deneyimi.
+                Öğrenme ritmini güçlendiren quiz yönetimi, süreli meydan okumalar ve akademik koordinasyon için tasarlanmış premium eğitim operasyon paneli.
             </p>
           </div>
 
           <div className="p-6 sm:p-8">
             <div className="mb-6">
-              <h2 className="hq-gold-text text-2xl font-semibold tracking-tight">Panel Girisi</h2>
-              <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">Hesabinizla giris yaparak yonetime devam edin.</p>
+              <h2 className="hq-gold-text text-2xl font-semibold tracking-tight">Tarih Pusulası</h2>
+              <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">Yönetim merkezine güvenli giriş yapın ve öğrenme deneyimini tek panelden yönetin.</p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="identifier">E-posta veya Kullanici Adi</Label>
+                <Label htmlFor="identifier">E-posta veya Kullanıcı Adı</Label>
                 <Input
                   id="identifier"
                   type="text"
@@ -115,7 +115,7 @@ export default function LoginPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Sifre</Label>
+                <Label htmlFor="password">Şifre</Label>
                 <Input id="password" type="password" autoComplete="current-password" placeholder="********" {...register("password")} />
                 {errors.password ? <p className="text-xs text-red-600">{errors.password.message}</p> : null}
               </div>
@@ -130,10 +130,10 @@ export default function LoginPage() {
                 {isSubmitting ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Giris yapiliyor...
+                    Giriş yapılıyor...
                   </span>
                 ) : (
-                  "Giris Yap"
+                  "Giriş Yap"
                 )}
               </Button>
             </form>

@@ -95,6 +95,7 @@ public class QuizController : ControllerBase
             Title = q.Title,
             Description = q.Description,
             CategoryId = q.CategoryId,
+            CreatedAt = q.CreatedAt,
             CategoryName = q.Category != null ? q.Category.Name : null,
             CreatedTeacherId = q.CreatedByTeacherId,
             TimeLimitMinutes = q.TimeLimitMinutes,

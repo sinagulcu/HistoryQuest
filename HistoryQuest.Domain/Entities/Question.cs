@@ -14,8 +14,9 @@ public class Question
     public Guid CreatedByTeacherId { get; private set; }
     public string? Explanation { get; private set; }
 
+    public Guid CategoryId { get; private set; }
 
-    public Guid? CategoryId { get; private set; }
+    public DateTime CreatedAt { get; private set; }
 
     public User? CreatedByTeacher { get; private set; }
     public Category? Category { get; private set; }
@@ -25,6 +26,7 @@ public class Question
     public DateTime? DeletedAt { get; private set; }
 
 
+
     protected Question() { }
 
     private Question(
@@ -32,7 +34,7 @@ public class Question
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid createdByTeacherId,
-        Guid? categoryId,
+        Guid categoryId,
         string? explanation,
         bool isDeleted = false)
     {
@@ -53,15 +55,16 @@ public class Question
         Explanation = string.IsNullOrWhiteSpace(explanation) ? null : explanation.Trim();
         IsDeleted = isDeleted;
         DeletedAt = null;
+        CreatedAt = DateTime.UtcNow;
     }
 
     public static Question Create(
-        string text,
-        QuestionDifficulty difficulty,
-        QuestionType type,
-        Guid teacherId,
-        Guid? categoryId,
-        string? explanation = "")
+            string text,
+            QuestionDifficulty difficulty,
+            QuestionType type,
+            Guid teacherId,
+            Guid categoryId,
+            string? explanation = "")
     {
         return new Question(text, difficulty, type, teacherId, categoryId, explanation);
     }

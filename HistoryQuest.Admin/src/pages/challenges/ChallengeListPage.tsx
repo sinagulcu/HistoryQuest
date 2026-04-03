@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { challengeApi } from "@/api/challenge.api";
 import { questionApi } from "@/api/question.api";
+import { userApi } from "@/api/user.api";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
@@ -40,19 +41,30 @@ export default function ChallengeListPage() {
   const [pendingDelete, setPendingDelete] = useState<Challenge | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [questionTextById, setQuestionTextById] = useState<Map<string, string>>(new Map());
+  const [creatorNameById, setCreatorNameById] = useState<Map<string, string>>(new Map());
 
   const fetchChallenges = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [{ data: challengeData }, { data: questionData }] = await Promise.all([challengeApi.getAll(), questionApi.getAll()]);
+      const [{ data: challengeData }, { data: questionData }, usersResponse] = await Promise.all([
+        challengeApi.getAll(),
+        questionApi.getAll(),
+        userApi.getAll().catch(() => ({ data: [] })),
+      ]);
       setChallenges(challengeData);
       setQuestionTextById(new Map(questionData.map((question) => [question.id, question.text])));
+      const nextCreatorMap = new Map<string, string>();
+      usersResponse.data.forEach((item) => {
+        const fullName = item.fullName || `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim();
+        nextCreatorMap.set(item.id, fullName || item.userName);
+      });
+      setCreatorNameById(nextCreatorMap);
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Meydan okumalar yuklenemedi.";
+          : "Meydan okumalar yüklenemedi.";
       setError(message);
     } finally {
       setLoading(false);
@@ -95,14 +107,14 @@ export default function ChallengeListPage() {
 
   const handleDelete = async (challenge: Challenge) => {
     if (!canManageChallenge(challenge)) {
-      toast.error("Bu kaydi silme yetkiniz yok");
+      toast.error("Bu kaydı silme yetkiniz yok");
       return;
     }
 
     setDeletingId(challenge.id);
     try {
       await challengeApi.delete(challenge.id);
-      toast.success("Meydan okuma silindi");
+      toast.success("Meydan okuma silindi.");
       setPendingDelete(null);
       await fetchChallenges();
     } catch (requestError) {
@@ -119,8 +131,8 @@ export default function ChallengeListPage() {
   return (
     <div className="space-y-6">
       <PageSection
-        title="Sureli Meydan Okumalar"
-        description="Sorulari tarih ve saate gore planlayin, puanlama kurallarini belirleyin."
+        title="Süreli Meydan Okumalar"
+        description="Soruları tarih ve saate göre planlayın, puanlama kurallarını belirleyin."
         actions={
           <Button className="gap-2" onClick={() => navigate("/challenges/create")}>
             <Plus className="h-4 w-4" />
@@ -130,13 +142,13 @@ export default function ChallengeListPage() {
       />
 
       <div className="grid gap-3 md:grid-cols-3">
-        <Input placeholder="Baslik veya soru ile ara" value={search} onChange={(event) => setSearch(event.target.value)} />
+          <Input placeholder="Başlık veya soru ile ara" value={search} onChange={(event) => setSearch(event.target.value)} />
         <select
           className="h-10 rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as ChallengeStatus | "all")}
         >
-          <option value="all">Tum durumlar</option>
+          <option value="all">Tüm durumlar</option>
           <option value="Scheduled">Planlandi</option>
           <option value="Active">Yayinda</option>
           <option value="Expired">Suresi Doldu</option>
@@ -146,16 +158,16 @@ export default function ChallengeListPage() {
           value={creatorFilter}
           onChange={(event) => setCreatorFilter(event.target.value as "all" | "mine" | "others")}
         >
-          <option value="all">Tum olusturanlar</option>
-          <option value="mine">Sadece benim kayitlarim</option>
-          <option value="others">Diger ogretmenler</option>
+          <option value="all">Tüm oluşturanlar</option>
+          <option value="mine">Sadece benim kayıtlarım</option>
+          <option value="others">Diğer öğretmenler</option>
         </select>
       </div>
 
-      {loading ? <LoadingState message="Meydan okumalar yukleniyor..." /> : null}
+      {loading ? <LoadingState message="Meydan okumalar yükleniyor..." /> : null}
       {error ? <ErrorState message={error} onRetry={fetchChallenges} /> : null}
       {!loading && !error && filteredChallenges.length === 0 ? (
-        <EmptyState message="Kayit bulunamadi. Ilk sureli meydan okumayi olusturun." />
+        <EmptyState message="Kayıt bulunamadı. İlk süreli meydan okumayı oluşturun." />
       ) : null}
 
       {!loading && !error && filteredChallenges.length > 0 ? (
@@ -163,14 +175,14 @@ export default function ChallengeListPage() {
           <table className="min-w-full divide-y divide-stone-200 dark:divide-stone-800">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
-                <th className="px-4 py-3">Baslik</th>
+                <th className="px-4 py-3">Başlık</th>
                 <th className="px-4 py-3">Soru</th>
-                <th className="px-4 py-3">Baslangic</th>
-                <th className="px-4 py-3">Puanli/Ek Sure</th>
+                <th className="px-4 py-3">Başlangıç</th>
+                <th className="px-4 py-3">Puanlı/Ek Süre</th>
                 <th className="px-4 py-3">Puan</th>
                 <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Olusturan</th>
-                <th className="px-4 py-3 text-right">Islemler</th>
+                <th className="px-4 py-3">Oluşturan</th>
+                <th className="px-4 py-3 text-right">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
@@ -195,7 +207,9 @@ export default function ChallengeListPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {challenge.createdByTeacherName || (challenge.createdByTeacherId === user?.id ? user.userName : "Belirtilmedi")}
+                      {creatorNameById.get(challenge.createdByTeacherId) ||
+                        challenge.createdByTeacherName ||
+                        (challenge.createdByTeacherId === user?.id ? user.userName : "Belirtilmedi")}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
@@ -203,7 +217,7 @@ export default function ChallengeListPage() {
                           <>
                             <Button variant="outline" className="gap-2" onClick={() => navigate(`/challenges/${challenge.id}/edit`)}>
                               <Pencil className="h-4 w-4" />
-                              Duzenle
+                              Düzenle
                             </Button>
                             <Button variant="danger" className="gap-2" onClick={() => setPendingDelete(challenge)}>
                               <Trash2 className="h-4 w-4" />
@@ -226,7 +240,7 @@ export default function ChallengeListPage() {
         title="Meydan Okuma Sil"
         description={
           pendingDelete
-            ? `${pendingDelete.title} kaydini silmek istediginize emin misiniz? Bu islem geri alinamaz.`
+            ? `${pendingDelete.title} kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
             : ""
         }
         confirmLabel="Evet, Sil"

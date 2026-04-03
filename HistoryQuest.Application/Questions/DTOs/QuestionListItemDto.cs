@@ -13,12 +13,12 @@ public class QuestionListItemDto
     public string? CategoryName { get; set; }
 
     public Guid CreatedByTeacherId { get; set; }
-
     public string CreatedByTeacherFullName { get; set; } = string.Empty;
     public string CreatedByTeacherUserName { get; set; } = string.Empty;
 
     public string TextPreview { get; set; } = string.Empty;
 
+    public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
 

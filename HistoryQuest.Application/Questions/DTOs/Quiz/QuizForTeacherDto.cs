@@ -7,6 +7,7 @@ public class QuizForTeacherDto
     public string? Description { get; set; }
     public string Status { get; set; } = null!;
     public int QuestionCount { get; set; }
+    public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public Guid CreatedTeacherId { get; set; }

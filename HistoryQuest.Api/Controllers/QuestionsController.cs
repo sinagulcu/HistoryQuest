@@ -78,6 +78,7 @@ public class QuestionsController : ControllerBase
             Text = q.Text,
             Type = q.Type.ToString(),
             Difficulty = q.Difficulty.ToString(),
+            CreatedAt = q.CreatedAt,
             IsDeleted = q.IsDeleted,
             DeletedAt = q.DeletedAt,
             DaysUntilHardDelete = q.DeletedAt.HasValue

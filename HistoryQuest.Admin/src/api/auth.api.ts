@@ -192,6 +192,10 @@ export const getApiErrorMessage = (error: unknown, fallback: string) => {
     return fallback;
   }
 
+  if (!error.response) {
+    return "API sunucusuna ulasilamiyor. Backend servisinin calistigini ve adresin dogru oldugunu kontrol edin.";
+  }
+
   if (typeof error.response?.data === "string" && error.response.data.trim()) {
     return error.response.data;
   }

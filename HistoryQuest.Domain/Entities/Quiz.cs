@@ -9,7 +9,7 @@ public class Quiz
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
     public string Title { get; private set; } = null!;
-    public string? Description { get; private set; } = null;
+    public string? Description { get; private set; } 
     public Guid CreatedByTeacherId { get; private set; }
     public Guid CategoryId { get; private set; }
     public int TimeLimitMinutes { get; private set; }
@@ -28,15 +28,8 @@ public class Quiz
 
     protected Quiz() { }
 
-    private Quiz(string title, string? description, Guid teacherId)
-    {
-        Title = title;
-        Description = description;
-        CreatedByTeacherId = teacherId;
-    }
 
-    public static Quiz Create(string title, string? description, Guid teacherId,
-        Guid categoryId, int timeLimitMinutes)
+    public static Quiz Create(string title, string? description, Guid teacherId, Guid categoryId, int timeLimitMinutes)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new BusinessRuleException("Quiz title cannot be empty.");
@@ -56,6 +49,7 @@ public class Quiz
             CategoryId = categoryId,
             TimeLimitMinutes = timeLimitMinutes,
             Status = QuizStatus.Draft,
+            CreatedAt = DateTime.UtcNow,
             IsDeleted = false
         };
 

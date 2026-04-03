@@ -44,12 +44,18 @@ public class QuestionRepository : IQuestionRepository
 
     public async Task<List<QuestionListItemDto>> GetAllForAdminPanelAsync(bool includedDeleted = false)
     {
-        var query = _context.Questions.AsQueryable();
+        var query = _context.Questions
+            .AsNoTracking()
+            .Include(q => q.Options)
+            .Include(q => q.Category)
+            .Include(q => q.CreatedByTeacher)
+            .AsQueryable();
 
         if(!includedDeleted)
             query = query.Where(q => !q.IsDeleted);
 
         return await query
+            .OrderByDescending(q => q.CreatedAt)
             .Select(q => new QuestionListItemDto
             {
                 Id = q.Id,
@@ -57,6 +63,7 @@ public class QuestionRepository : IQuestionRepository
                 TextPreview = q.Text.Length > 100 ? q.Text.Substring(0, 100) + "..." : q.Text,
                 Difficulty = q.Difficulty.ToString(),
                 CategoryId = q.CategoryId,
+                CreatedAt = q.CreatedAt,
                 CategoryName = _context.Categories
                 .Where(c => c.Id == q.CategoryId)
                 .Select(c => c.Name)

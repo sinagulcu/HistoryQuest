@@ -56,7 +56,7 @@ export default function UserListPage() {
       const response = await userApi.getAll();
       setUsers(response.data);
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError, "Kullanicilar yuklenirken hata olustu."));
+      setError(getApiErrorMessage(requestError, "Kullanıcılar yüklenirken hata oluştu."));
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export default function UserListPage() {
 
   const openRoleDialog = (targetUser: User) => {
     if (currentUser?.id === targetUser.id) {
-      toast.error("Kendi rolunuzu degistiremezsiniz");
+      toast.error("Kendi rolünüzü değiştiremezsiniz.");
       return;
     }
 
@@ -86,18 +86,18 @@ export default function UserListPage() {
     }
 
     if (currentUser?.id === selectedUser.id) {
-      toast.error("Kendi rolunuzu degistiremezsiniz");
+      toast.error("Kendi rolünüzü değiştiremezsiniz.");
       return;
     }
 
     setUpdatingRole(true);
     try {
       await userApi.updateRole(selectedUser.id, selectedRole);
-      toast.success("Kullanici rolu guncellendi");
+      toast.success("Kullanıcı rolü güncellendi.");
       closeRoleDialog();
       await fetchUsers();
     } catch (requestError) {
-      toast.error(getApiErrorMessage(requestError, "Rol degistirilirken hata olustu."));
+      toast.error(getApiErrorMessage(requestError, "Rol değiştirilirken hata oluştu."));
     } finally {
       setUpdatingRole(false);
     }
@@ -105,18 +105,18 @@ export default function UserListPage() {
 
   const handleDeleteUser = async (targetUser: User) => {
     if (currentUser?.id === targetUser.id) {
-      toast.error("Kendi hesabinizi silemezsiniz");
+      toast.error("Kendi hesabınızı silemezsiniz.");
       return;
     }
 
     setDeletingUserId(targetUser.id);
     try {
       await userApi.delete(targetUser.id);
-      toast.success("Kullanici silindi");
+      toast.success("Kullanıcı silindi.");
       setPendingDeleteUser(null);
       await fetchUsers();
     } catch (requestError) {
-      toast.error(getApiErrorMessage(requestError, "Kullanici silinirken hata olustu."));
+      toast.error(getApiErrorMessage(requestError, "Kullanıcı silinirken hata oluştu."));
     } finally {
       setDeletingUserId(null);
     }
@@ -125,8 +125,8 @@ export default function UserListPage() {
   return (
     <div className="space-y-6">
       <PageSection
-        title="Kullanici Yonetimi"
-        description="Kullanici rolleri, yetki duzenlemeleri ve silme islemleri"
+        title="Kullanıcı Yönetimi"
+        description="Kullanıcı rolleri, yetki düzenlemeleri ve silme işlemleri"
         actions={
           <Button variant="outline" className="gap-2" onClick={fetchUsers}>
             <RefreshCw className="h-4 w-4" />
@@ -135,11 +135,11 @@ export default function UserListPage() {
         }
       />
 
-      {loading ? <LoadingState message="Kullanicilar yukleniyor..." /> : null}
+      {loading ? <LoadingState message="Kullanıcılar yükleniyor..." /> : null}
 
       {error ? <ErrorState message={error} onRetry={fetchUsers} /> : null}
 
-      {!loading && !error && users.length === 0 ? <EmptyState message="Kayitli kullanici bulunamadi." /> : null}
+      {!loading && !error && users.length === 0 ? <EmptyState message="Kayıtlı kullanıcı bulunamadı." /> : null}
 
       {!loading && !error && users.length > 0 ? (
         <div className="overflow-x-auto rounded-lg border border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900">
@@ -147,12 +147,12 @@ export default function UserListPage() {
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
                 <th className="px-4 py-3">Ad Soyad</th>
-                <th className="px-4 py-3">Kullanici Adi</th>
+                <th className="px-4 py-3">Kullanıcı Adı</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Rol</th>
                 <th className="px-4 py-3">Skor</th>
-                <th className="px-4 py-3">Kayit Tarihi</th>
-                <th className="px-4 py-3 text-right">Islemler</th>
+                <th className="px-4 py-3">Kayıt Tarihi</th>
+                <th className="px-4 py-3 text-right">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
@@ -180,7 +180,7 @@ export default function UserListPage() {
                           onClick={() => openRoleDialog(targetUser)}
                         >
                           <UserRoundCog className="h-4 w-4" />
-                          Rol Degistir
+                          Rol Değiştir
                         </Button>
                         <Button
                           variant="danger"
@@ -205,14 +205,14 @@ export default function UserListPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-stone-900">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Rol Degistir</h2>
+              <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Rol Değiştir</h2>
               <Button variant="ghost" onClick={closeRoleDialog} aria-label="Kapat">
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
             <div className="space-y-3 text-sm">
-              <p className="text-stone-600 dark:text-stone-300">Kullanici: {selectedUser.email}</p>
+              <p className="text-stone-600 dark:text-stone-300">Kullanıcı: {selectedUser.email}</p>
               <p className="text-stone-600 dark:text-stone-300">Mevcut Rol: {selectedUser.role}</p>
 
               <label className="block text-stone-700 dark:text-stone-200" htmlFor="new-role-select">
@@ -232,10 +232,10 @@ export default function UserListPage() {
 
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="outline" onClick={closeRoleDialog}>
-                Iptal
+                İptal
               </Button>
               <Button onClick={handleRoleUpdate} disabled={updatingRole}>
-                {updatingRole ? "Degistiriliyor..." : "Degistir"}
+                {updatingRole ? "Değiştiriliyor..." : "Değiştir"}
               </Button>
             </div>
           </div>
@@ -244,10 +244,10 @@ export default function UserListPage() {
 
       <ConfirmDialog
         open={Boolean(pendingDeleteUser)}
-        title="Kullanici Sil"
+        title="Kullanıcı Sil"
         description={
           pendingDeleteUser
-            ? `${pendingDeleteUser.email} kullanicisini silmek istediginize emin misiniz? Bu islem geri alinamaz.`
+            ? `${pendingDeleteUser.email} kullanıcısını silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
             : ""
         }
         confirmLabel="Evet, Sil"

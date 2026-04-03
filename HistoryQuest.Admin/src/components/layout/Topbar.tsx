@@ -48,7 +48,7 @@ export default function Topbar({ onOpenMobileMenu, onToggleDesktopSidebar, isDes
           {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
         <div className="hidden rounded-lg border border-[#cfb06a]/50 bg-[#fffcf5] px-3 py-1.5 text-right shadow-sm dark:border-[#7f6835] dark:bg-[#231c12] md:block">
-          <p className="text-xs font-medium text-stone-900 dark:text-stone-100">{user?.userName || "Kullanici"}</p>
+          <p className="text-xs font-medium text-stone-900 dark:text-stone-100">{user?.userName || "Kullanıcı"}</p>
           <p className="text-[11px] text-stone-500 dark:text-stone-400">{user?.role || "-"}</p>
         </div>
       </div>

@@ -31,7 +31,7 @@ export default function ChallengeEditPage() {
 
   const fetchInitialData = async () => {
     if (!challengeId) {
-      setError("Gecersiz kayit kimligi.");
+      setError("Geçersiz kayıt kimliği.");
       setLoading(false);
       return;
     }
@@ -48,7 +48,7 @@ export default function ChallengeEditPage() {
 
       const challengeData = challengeResponse.data;
       if (user?.role === "Teacher" && challengeData.createdByTeacherId !== user.id) {
-        toast.error("Bu kaydi duzenleme yetkiniz yok");
+        toast.error("Bu kaydı düzenleme yetkiniz yok.");
         navigate("/challenges", { replace: true });
         return;
       }
@@ -60,7 +60,7 @@ export default function ChallengeEditPage() {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Kayit verileri yuklenemedi.";
+          : "Kayıt verileri yüklenemedi.";
       setError(message);
     } finally {
       setLoading(false);
@@ -76,13 +76,13 @@ export default function ChallengeEditPage() {
     try {
       const { data } = await questionApi.create(values);
       setQuestions((prev) => [data, ...prev]);
-      toast.success("Yeni soru olusturuldu ve havuza eklendi");
+      toast.success("Yeni soru oluşturuldu ve havuza eklendi.");
       return data;
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Soru olusturulamadi.";
+          : "Soru oluşturulamadı.";
       toast.error(message);
       return null;
     } finally {
@@ -92,7 +92,7 @@ export default function ChallengeEditPage() {
 
   const handleSubmit = async (values: ChallengeFormValues) => {
     if (!challengeId) {
-      toast.error("Gecersiz kayit kimligi.");
+      toast.error("Geçersiz kayıt kimliği.");
       return;
     }
 
@@ -101,13 +101,13 @@ export default function ChallengeEditPage() {
       await challengeApi.update(challengeId, {
         ...values,
       });
-      toast.success("Meydan okuma guncellendi");
+      toast.success("Meydan okuma güncellendi.");
       navigate("/challenges");
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Meydan okuma guncellenemedi.";
+          : "Meydan okuma güncellenemedi.";
       toast.error(message);
     } finally {
       setSaving(false);
@@ -135,11 +135,11 @@ export default function ChallengeEditPage() {
   return (
     <div className="space-y-6">
       <PageSection
-        title="Sureli Meydan Okuma Duzenle"
-        description="Planlanan tarih, sure ve puanlama kurallarini guncelleyebilirsiniz."
+        title="Süreli Meydan Okuma Düzenle"
+        description="Planlanan tarih, süre ve puanlama kurallarını güncelleyebilirsiniz."
       />
 
-      {loading ? <LoadingState message="Kayit verileri yukleniyor..." /> : null}
+      {loading ? <LoadingState message="Kayıt verileri yükleniyor..." /> : null}
       {error ? <ErrorState message={error} onRetry={fetchInitialData} /> : null}
 
       {!loading && !error && challenge && initialValues ? (

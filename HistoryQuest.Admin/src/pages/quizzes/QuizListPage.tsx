@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { categoryApi } from "@/api/category.api";
 import { quizApi } from "@/api/quiz.api";
+import { userApi } from "@/api/user.api";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
@@ -36,12 +37,17 @@ export default function QuizListPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [pendingDeleteQuiz, setPendingDeleteQuiz] = useState<Quiz | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [creatorNameById, setCreatorNameById] = useState<Map<string, string>>(new Map());
 
   const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [quizResponse, categoryResponse] = await Promise.all([quizApi.getAll(), categoryApi.getAll()]);
+      const [quizResponse, categoryResponse, usersResponse] = await Promise.all([
+        quizApi.getAll(),
+        categoryApi.getAll(),
+        userApi.getAll().catch(() => ({ data: [] })),
+      ]);
 
       const baseQuizzes = quizResponse.data;
       const detailTargets = baseQuizzes.filter(
@@ -62,6 +68,12 @@ export default function QuizListPage() {
 
       setQuizzes(enrichedQuizzes);
       setCategories(categoryResponse.data);
+      const nextCreatorMap = new Map<string, string>();
+      usersResponse.data.forEach((item) => {
+        const fullName = item.fullName || `${item.firstName ?? ""} ${item.lastName ?? ""}`.trim();
+        nextCreatorMap.set(item.id, fullName || item.userName);
+      });
+      setCreatorNameById(nextCreatorMap);
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
@@ -92,6 +104,15 @@ export default function QuizListPage() {
       return quiz.categoryName;
     }
     return categories.find((category) => category.id === quiz.categoryId)?.name || "Belirtilmedi";
+  };
+
+  const getCreatorName = (quiz: Quiz) => {
+    const fromUsers = creatorNameById.get(quiz.createdByUserId);
+    if (fromUsers) {
+      return fromUsers;
+    }
+
+    return quiz.createdByUserName || user?.userName || "Belirtilmedi";
   };
 
   const filteredQuizzes = useMemo(() => {
@@ -131,7 +152,7 @@ export default function QuizListPage() {
 
   const handlePublishToggle = async (quiz: Quiz) => {
     if (!canManageQuiz(quiz)) {
-      toast.error("Bu quizin yayin durumunu degistirme yetkiniz yok");
+      toast.error("Bu quizin yayın durumunu değiştirme yetkiniz yok.");
       return;
     }
 
@@ -139,17 +160,17 @@ export default function QuizListPage() {
     try {
       if (quiz.isPublished) {
         await quizApi.unpublish(quiz.id);
-        toast.success("Quiz taslak durumuna alindi");
+        toast.success("Quiz taslak durumuna alındı.");
       } else {
         await quizApi.publish(quiz.id);
-        toast.success("Quiz yayinlandi");
+        toast.success("Quiz yayınlandı.");
       }
       await fetchData();
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Yayin durumu degistirilemedi.";
+          : "Yayın durumu değiştirilemedi.";
       toast.error(message);
     } finally {
       setPublishingId(null);
@@ -160,17 +181,17 @@ export default function QuizListPage() {
     <div className="space-y-6">
       <PageSection
         title="Quizler"
-        description="Quizleri arayin, filtreleyin ve yetkinize gore yonetin."
+        description="Quizleri arayın, filtreleyin ve yetkinize göre yönetin."
         actions={
           <Button onClick={() => navigate("/quizzes/create")} className="gap-2">
             <Plus className="h-4 w-4" />
-            Yeni Quiz Olustur
+            Yeni Quiz Oluştur
           </Button>
         }
       />
 
       <div className="grid gap-3 md:grid-cols-4">
-        <Input placeholder="Basliga gore ara" value={search} onChange={(event) => setSearch(event.target.value)} />
+        <Input placeholder="Başlığa göre ara" value={search} onChange={(event) => setSearch(event.target.value)} />
         <select
           className="h-10 rounded-lg border border-stone-300 bg-white/90 px-3 text-sm dark:border-stone-700 dark:bg-stone-900/80"
           value={categoryFilter}
@@ -179,7 +200,7 @@ export default function QuizListPage() {
             setCategoryFilter(value === "all" ? "all" : value);
           }}
         >
-          <option value="all">Tum kategoriler</option>
+          <option value="all">Tüm kategoriler</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
@@ -194,7 +215,7 @@ export default function QuizListPage() {
             setDifficultyFilter(value === "all" ? "all" : Number(value));
           }}
         >
-          <option value="all">Tum zorluklar</option>
+          <option value="all">Tüm zorluklar</option>
           <option value={1}>Kolay</option>
           <option value={2}>Orta</option>
           <option value={3}>Zor</option>
@@ -204,18 +225,18 @@ export default function QuizListPage() {
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as "all" | "published" | "draft")}
         >
-          <option value="all">Tum durumlar</option>
-          <option value="published">Yayinda</option>
+          <option value="all">Tüm durumlar</option>
+          <option value="published">Yayında</option>
           <option value="draft">Taslak</option>
         </select>
       </div>
 
-      {loading ? <LoadingState message="Quizler yukleniyor..." /> : null}
+      {loading ? <LoadingState message="Quizler yükleniyor..." /> : null}
 
       {error ? <ErrorState message={error} onRetry={fetchData} /> : null}
 
       {!loading && !error && filteredQuizzes.length === 0 ? (
-        <EmptyState message="Henuz quiz olusturulmamis. Ilk quizinizi olusturun." />
+        <EmptyState message="Henüz quiz oluşturulmamış. İlk quizinizi oluşturun." />
       ) : null}
 
       {!loading && !error && filteredQuizzes.length > 0 ? (
@@ -223,14 +244,14 @@ export default function QuizListPage() {
           <table className="min-w-full divide-y divide-stone-200 dark:divide-stone-800">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
-                <th className="px-4 py-3">Baslik</th>
+                <th className="px-4 py-3">Başlık</th>
                 <th className="px-4 py-3">Kategori</th>
                 <th className="px-4 py-3">Zorluk</th>
-                <th className="px-4 py-3">Soru Sayisi</th>
-                <th className="px-4 py-3">Sure</th>
+                <th className="px-4 py-3">Soru Sayısı</th>
+                <th className="px-4 py-3">Süre</th>
                 <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Olusturan</th>
-                <th className="px-4 py-3 text-right">Islemler</th>
+                <th className="px-4 py-3">Oluşturan</th>
+                <th className="px-4 py-3 text-right">İşlemler</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
@@ -251,10 +272,10 @@ export default function QuizListPage() {
                             : "bg-[#f7efdc] text-[#876822] dark:bg-[#2f2615] dark:text-[#d7bd7e]"
                         }`}
                       >
-                        {quiz.isPublished ? "Yayinda" : "Taslak"}
+                        {quiz.isPublished ? "Yayında" : "Taslak"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{quiz.createdByUserName || user?.userName || "Belirtilmedi"}</td>
+                    <td className="px-4 py-3">{getCreatorName(quiz)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => navigate(`/quizzes/${quiz.id}`)} className="gap-2">
@@ -265,7 +286,7 @@ export default function QuizListPage() {
                           <>
                             <Button variant="outline" onClick={() => navigate(`/quizzes/${quiz.id}/edit`)} className="gap-2">
                               <Pencil className="h-4 w-4" />
-                              Duzenle
+                              Düzenle
                             </Button>
                             <Button
                               variant="outline"
@@ -274,7 +295,7 @@ export default function QuizListPage() {
                               className="gap-2"
                             >
                               {quiz.isPublished ? <Download className="h-4 w-4" /> : <Upload className="h-4 w-4" />}
-                              {quiz.isPublished ? "Kaldir" : "Yayinla"}
+                              {quiz.isPublished ? "Kaldır" : "Yayınla"}
                             </Button>
                             <Button
                               variant="danger"
@@ -302,7 +323,7 @@ export default function QuizListPage() {
         title="Quiz Sil"
         description={
           pendingDeleteQuiz
-            ? `${pendingDeleteQuiz.title} baslikli quizi silmek istediginize emin misiniz? Bu islem geri alinamaz.`
+            ? `${pendingDeleteQuiz.title} başlıklı quizi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
             : ""
         }
         confirmLabel="Evet, Sil"

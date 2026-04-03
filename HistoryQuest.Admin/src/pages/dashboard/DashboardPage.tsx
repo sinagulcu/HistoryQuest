@@ -36,7 +36,7 @@ interface KpiStats {
   totalUsers: number;
 }
 
-const pieColors = ["#a16207", "#b45309", "#92400e", "#ca8a04", "#713f12", "#854d0e"];
+const pieColors = ["#0ea5a4", "#2563eb", "#7c3aed", "#16a34a", "#d97706", "#dc2626", "#0891b2"];
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string) {
   if (axios.isAxiosError(error)) {
@@ -57,7 +57,8 @@ function getTimestamp(value: string | undefined, fallback: number | string): num
 }
 
 function formatDateTime(value: string | undefined) {
-  return formatServerDateTime(value);
+  const formatted = formatServerDateTime(value);
+  return formatted === "-" ? "Tarih bilgisi yok" : formatted;
 }
 
 export default function DashboardPage() {
@@ -136,6 +137,25 @@ export default function DashboardPage() {
         (a, b) => getTimestamp(b.createdAt, b.id) - getTimestamp(a.createdAt, a.id)
       );
 
+      const latestQuizCandidates = sortedQuizzes.slice(0, 5);
+      const missingQuizDateCandidates = latestQuizCandidates.filter((quiz) => !quiz.createdAt);
+      let latestQuizData = latestQuizCandidates;
+      if (missingQuizDateCandidates.length > 0) {
+        const quizDetailResults = await Promise.allSettled(
+          missingQuizDateCandidates.map((quiz) => quizApi.getById(quiz.id))
+        );
+        const quizDetailMap = new Map(
+          quizDetailResults
+            .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof quizApi.getById>>> => result.status === "fulfilled")
+            .map((result) => [result.value.data.id, result.value.data])
+        );
+
+        latestQuizData = latestQuizCandidates.map((quiz) => ({
+          ...quiz,
+          ...quizDetailMap.get(quiz.id),
+        }));
+      }
+
       const latestQuestionCandidates = sortedQuestions.slice(0, 5);
       const missingDateCandidates = latestQuestionCandidates.filter((question) => !question.createdAt);
       if (missingDateCandidates.length > 0) {
@@ -154,7 +174,7 @@ export default function DashboardPage() {
       } else {
         setLatestQuestions(latestQuestionCandidates);
       }
-      setLatestQuizzes(sortedQuizzes.slice(0, 5));
+      setLatestQuizzes(latestQuizData);
 
       const categoryNameById = new Map<string, string>(categories.map((category: Category) => [category.id, category.name]));
       const categoryCounter = new Map<string, number>();
@@ -162,7 +182,7 @@ export default function DashboardPage() {
         categoryCounter.set(question.categoryId, (categoryCounter.get(question.categoryId) ?? 0) + 1);
       });
       const categoryChartData = Array.from(categoryCounter.entries()).map(([categoryId, count]) => ({
-        name: categoryNameById.get(categoryId) ?? "Kategori belirtilmemis",
+        name: categoryNameById.get(categoryId) ?? "Kategori belirtilmemiş",
         value: count,
       }));
       setCategoryDistribution(categoryChartData);
@@ -183,10 +203,24 @@ export default function DashboardPage() {
         setRoleDistribution([]);
       }
 
-      const activityList: Array<{ text: string; dateLabel: string }> = [];
-      setRecentActivity(activityList);
+      const activityList = [
+        ...latestQuizData.slice(0, 3).map((quiz) => ({
+          text: `Yeni quiz oluşturuldu: ${quiz.title}`,
+          dateLabel: formatDateTime(quiz.createdAt),
+          timestamp: getTimestamp(quiz.createdAt, 0),
+        })),
+        ...latestQuestionCandidates.slice(0, 3).map((question) => ({
+          text: `Yeni soru eklendi: ${question.text}`,
+          dateLabel: formatDateTime(question.createdAt),
+          timestamp: getTimestamp(question.createdAt, 0),
+        })),
+      ];
+
+      activityList.sort((a, b) => b.timestamp - a.timestamp);
+
+      setRecentActivity(activityList.map(({ text, dateLabel }) => ({ text, dateLabel })));
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError, "Dashboard verileri yuklenirken hata olustu."));
+      setError(getApiErrorMessage(requestError, "Dashboard verileri yüklenirken hata oluştu."));
     } finally {
       setLoading(false);
     }
@@ -201,7 +235,7 @@ export default function DashboardPage() {
       { title: "Toplam Quiz", value: kpiStats.totalQuizzes, icon: BarChart3 },
       { title: "Toplam Soru", value: kpiStats.totalQuestions, icon: FileQuestion },
       { title: "Toplam Deneme", value: kpiStats.totalAttempts, icon: BarChart3 },
-      { title: "Toplam Kullanici", value: kpiStats.totalUsers, icon: Users2 },
+      { title: "Toplam Kullanıcı", value: kpiStats.totalUsers, icon: Users2 },
     ];
 
     return cards;
@@ -211,7 +245,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageSection
         title="Dashboard"
-        description="Platform ozet metrikleri, dagilimlar ve son aktiviteler"
+        description="Platform özet metrikleri, dağılımlar ve son aktiviteler"
         actions={
           <div className="flex flex-wrap gap-2">
             <Button className="gap-2" onClick={() => navigate("/quizzes/create")}>
@@ -230,7 +264,7 @@ export default function DashboardPage() {
         }
       />
 
-      {loading ? <LoadingState message="Dashboard verileri yukleniyor..." /> : null}
+      {loading ? <LoadingState message="Dashboard verileri yükleniyor..." /> : null}
 
       {error ? <ErrorState message={error} onRetry={fetchDashboardData} /> : null}
 
@@ -258,13 +292,13 @@ export default function DashboardPage() {
             <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
               <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Son Eklenen Quizler</h2>
               {latestQuizzes.length === 0 ? (
-                <p className="text-sm text-stone-500 dark:text-stone-400">Quiz verisi bulunamadi.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400">Quiz verisi bulunamadı.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
-                        <th className="py-2">Baslik</th>
+                          <th className="py-2">Başlık</th>
                         <th className="py-2">Durum</th>
                         <th className="py-2">Tarih</th>
                       </tr>
@@ -273,7 +307,7 @@ export default function DashboardPage() {
                       {latestQuizzes.map((quiz) => (
                         <tr className="border-t border-stone-100 text-stone-700 dark:border-stone-800 dark:text-stone-200" key={quiz.id}>
                           <td className="py-2">{quiz.title}</td>
-                          <td className="py-2">{quiz.isPublished ? "Yayinda" : "Taslak"}</td>
+                          <td className="py-2">{quiz.isPublished ? "Yayında" : "Taslak"}</td>
                           <td className="py-2">{formatDateTime(quiz.createdAt)}</td>
                         </tr>
                       ))}
@@ -286,7 +320,7 @@ export default function DashboardPage() {
             <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
               <h2 className="mb-4 text-sm font-semibold text-stone-900 dark:text-stone-100">Son Eklenen Sorular</h2>
               {latestQuestions.length === 0 ? (
-                <p className="text-sm text-stone-500 dark:text-stone-400">Soru verisi bulunamadi.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400">Soru verisi bulunamadı.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
@@ -314,9 +348,9 @@ export default function DashboardPage() {
 
           <section className="grid gap-4 xl:grid-cols-2">
             <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
-              <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Kategorilere Gore Soru Dagilimi</h2>
+              <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Kategorilere Göre Soru Dağılımı</h2>
               {categoryDistribution.length === 0 ? (
-                <p className="text-sm text-stone-500 dark:text-stone-400">Dagilim icin yeterli soru verisi yok.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400">Dağılım için yeterli soru verisi yok.</p>
               ) : (
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
@@ -335,9 +369,9 @@ export default function DashboardPage() {
             </div>
 
             <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
-              <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Zorluk Seviyesi Dagilimi</h2>
+              <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Zorluk Seviyesi Dağılımı</h2>
               {difficultyDistribution.every((entry) => entry.value === 0) ? (
-                <p className="text-sm text-stone-500 dark:text-stone-400">Dagilim icin yeterli soru verisi yok.</p>
+                <p className="text-sm text-stone-500 dark:text-stone-400">Dağılım için yeterli soru verisi yok.</p>
               ) : (
                 <div className="h-72">
                   <ResponsiveContainer width="100%" height="100%">
@@ -346,7 +380,7 @@ export default function DashboardPage() {
                       <XAxis dataKey="name" />
                       <YAxis allowDecimals={false} />
                       <Tooltip />
-                      <Bar dataKey="value" fill="#a16207" radius={[8, 8, 0, 0]} />
+                      <Bar dataKey="value" fill="#0ea5a4" radius={[8, 8, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -357,9 +391,9 @@ export default function DashboardPage() {
           {isAdmin ? (
             <section className="grid gap-4 xl:grid-cols-2">
               <div className="min-w-0 rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
-                <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Rol Dagilimi</h2>
+                <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Rol Dağılımı</h2>
                 {roleDistribution.length === 0 ? (
-                  <p className="text-sm text-stone-500 dark:text-stone-400">Rol dagilimi verisi alinamadi.</p>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">Rol dağılımı verisi alınamadı.</p>
                 ) : (
                   <div className="h-72">
                     <ResponsiveContainer width="100%" height="100%">
@@ -380,7 +414,7 @@ export default function DashboardPage() {
               <div className="rounded-2xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur dark:border-stone-800 dark:bg-stone-900/65">
                 <h2 className="mb-3 text-sm font-semibold text-stone-900 dark:text-stone-100">Son Aktiviteler</h2>
                 {recentActivity.length === 0 ? (
-                  <p className="text-sm text-stone-500 dark:text-stone-400">Son aktivite kaydi bulunamadi.</p>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">Son aktivite kaydı bulunamadı.</p>
                 ) : (
                   <ul className="space-y-3 text-sm text-stone-700 dark:text-stone-200">
                     {recentActivity.map((activity, index) => (

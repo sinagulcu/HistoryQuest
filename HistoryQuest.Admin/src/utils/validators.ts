@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  identifier: z.string().min(3, "E-posta veya kullanici adi giriniz"),
+  identifier: z.string().min(3, "E-posta veya kullanıcı adı giriniz"),
   password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
 });
 
@@ -22,7 +22,7 @@ export const questionOptionSchema = z.object({
 export const questionSchema = z
   .object({
     text: z.string().min(10, "Soru metni en az 10 karakter olmalı"),
-    categoryId: z.string().min(1, "Kategori seciniz"),
+    categoryId: z.string().min(1, "Kategori seçiniz"),
     difficultyLevel: z.number().min(1).max(3),
     options: z.array(questionOptionSchema).min(2, "En az 2 seçenek olmalı").max(6, "En fazla 6 seçenek olabilir"),
   })
@@ -34,26 +34,26 @@ export const questionSchema = z
 export type QuestionFormValues = z.infer<typeof questionSchema>;
 
 export const quizSchema = z.object({
-  title: z.string().min(3, "Baslik en az 3 karakter olmali"),
-  description: z.string().min(10, "Aciklama en az 10 karakter olmali"),
-  categoryId: z.string().min(1, "Kategori seciniz"),
+  title: z.string().min(3, "Başlık en az 3 karakter olmalı"),
+  description: z.string().min(10, "Açıklama en az 10 karakter olmalı"),
+  categoryId: z.string().min(1, "Kategori seçiniz"),
   difficultyLevel: z.number().min(1).max(3),
-  timeLimitMinutes: z.number().min(1, "Sure en az 1 dakika olmali"),
+  timeLimitMinutes: z.number().min(1, "Süre en az 1 dakika olmalı"),
   isPublished: z.boolean(),
 });
 
 export type QuizFormValues = z.infer<typeof quizSchema>;
 
 export const challengeSchema = z.object({
-  title: z.string().min(3, "Baslik en az 3 karakter olmali"),
-  questionId: z.string().min(1, "Bir soru seciniz"),
+  title: z.string().min(3, "Başlık en az 3 karakter olmalı"),
+  questionId: z.string().min(1, "Bir soru seçiniz"),
   scheduledAt: z.string().min(1, "Planlanan tarih ve saat zorunludur"),
-  scoringDurationMinutes: z.number().min(1, "Puanli sure en az 1 dakika olmali"),
-  lateDurationMinutes: z.number().min(1, "Ek sure en az 1 dakika olmali"),
-  maxScore: z.number().min(1, "Maksimum puan en az 1 olmali"),
+  scoringDurationMinutes: z.number().min(1, "Puanlı süre en az 1 dakika olmalı"),
+  lateDurationMinutes: z.number().min(1, "Ek süre en az 1 dakika olmalı"),
+  maxScore: z.number().min(1, "Maksimum puan en az 1 olmalı"),
   showCorrectAnswerOnWrong: z.boolean(),
   showExplanationOnWrong: z.boolean(),
-  explanation: z.string().max(1000, "Aciklama 1000 karakterden uzun olamaz").optional(),
+  explanation: z.string().max(1000, "Açıklama 1000 karakterden uzun olamaz").optional(),
   notifyAllStudents: z.boolean(),
 });
 

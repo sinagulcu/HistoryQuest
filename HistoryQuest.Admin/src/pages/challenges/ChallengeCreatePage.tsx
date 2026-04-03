@@ -33,7 +33,7 @@ export default function ChallengeCreatePage() {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Form verileri yuklenemedi.";
+          : "Form verileri yüklenemedi.";
       setError(message);
     } finally {
       setLoading(false);
@@ -49,13 +49,13 @@ export default function ChallengeCreatePage() {
     try {
       const { data } = await questionApi.create(values);
       setQuestions((prev) => [data, ...prev]);
-      toast.success("Yeni soru olusturuldu ve havuza eklendi");
+      toast.success("Yeni soru oluşturuldu ve havuza eklendi.");
       return data;
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
           ? requestError.response.data.message
-          : "Soru olusturulamadi.";
+          : "Soru oluşturulamadı.";
       toast.error(message);
       return null;
     } finally {
@@ -69,7 +69,7 @@ export default function ChallengeCreatePage() {
       await challengeApi.create({
         ...values,
       });
-      toast.success("Sureli meydan okuma planlandi");
+      toast.success("Süreli meydan okuma planlandı.");
       navigate("/challenges");
     } catch (requestError) {
       const message =
@@ -85,11 +85,11 @@ export default function ChallengeCreatePage() {
   return (
     <div className="space-y-6">
       <PageSection
-        title="Sureli Meydan Okuma Olustur"
-        description="Hazir soru secin veya yeni soru yazin, tarih ve saat belirleyip tum ogrencilere planlayin."
+        title="Süreli Meydan Okuma Oluştur"
+        description="Hazır soru seçin veya yeni soru yazın, tarih ve saat belirleyip tüm öğrencilere planlayın."
       />
 
-      {loading ? <LoadingState message="Meydan okuma formu hazirlaniyor..." /> : null}
+      {loading ? <LoadingState message="Meydan okuma formu hazırlanıyor..." /> : null}
       {error ? <ErrorState message={error} onRetry={fetchInitialData} /> : null}
 
       {!loading && !error ? (

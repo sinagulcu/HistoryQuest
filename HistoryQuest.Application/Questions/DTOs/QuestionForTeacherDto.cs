@@ -7,10 +7,12 @@ public class QuestionForTeacherDto
     public string Text { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
     public string Difficulty { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public int? DaysUntilHardDelete { get; set; }
     public List<OptionForTeacherDto> Options { get; set; } = new();
+
 
 }
 

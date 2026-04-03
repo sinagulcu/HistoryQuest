@@ -54,10 +54,10 @@ export default function Sidebar({ isMobileOpen, onCloseMobile, isDesktopCollapse
             isDesktopCollapsed ? "lg:px-2 lg:text-center" : ""
           }`}
         >
-          <p className="hq-gold-text text-lg font-bold tracking-tight">HQ</p>
-          <p className={`hq-gold-text text-sm font-semibold ${isDesktopCollapsed ? "lg:hidden" : ""}`}>HistoryQuest</p>
+          <p className="hq-gold-text text-lg font-bold tracking-tight">TP</p>
+          <p className={`hq-gold-text text-sm font-semibold ${isDesktopCollapsed ? "lg:hidden" : ""}`}>Tarih Pusulası</p>
           <p className={`text-xs text-stone-600 dark:text-stone-400 ${isDesktopCollapsed ? "lg:hidden" : ""}`}>
-            {isAdmin ? "Admin Panel" : "Ogretmen Paneli"}
+            {isAdmin ? "Yönetici Paneli" : "Öğretmen Paneli"}
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function Sidebar({ isMobileOpen, onCloseMobile, isDesktopCollapse
           }`}
         >
           <p className={`text-sm font-semibold text-stone-700 dark:text-stone-200 ${isDesktopCollapsed ? "lg:hidden" : ""}`}>
-            {user?.userName || "Kullanici"}
+            {user?.userName || "Kullanıcı"}
           </p>
           <p className={`mb-3 text-xs text-stone-500 dark:text-stone-400 ${isDesktopCollapsed ? "lg:hidden" : ""}`}>
             {user?.role || "Yetki Yok"}
@@ -124,10 +124,10 @@ export default function Sidebar({ isMobileOpen, onCloseMobile, isDesktopCollapse
               isDesktopCollapsed ? "mx-auto h-10 w-10 min-w-10 justify-center rounded-xl p-0" : "w-full justify-start"
             }`}
             onClick={onLogout}
-            title={isDesktopCollapsed ? "Cikis Yap" : undefined}
+            title={isDesktopCollapsed ? "Çıkış Yap" : undefined}
           >
             <LogOut className="h-5 w-5" />
-            <span className={isDesktopCollapsed ? "lg:hidden" : ""}>Cikis Yap</span>
+            <span className={isDesktopCollapsed ? "lg:hidden" : ""}>Çıkış Yap</span>
           </Button>
         </div>
       </aside>

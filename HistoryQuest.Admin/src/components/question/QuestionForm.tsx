@@ -66,7 +66,7 @@ export default function QuestionForm({
         <textarea
           id="text"
           className="min-h-28 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
-          placeholder="Soru metnini yaziniz"
+          placeholder="Soru metnini yazınız"
           {...register("text")}
         />
         {errors.text ? <p className="text-xs text-red-600">{errors.text.message}</p> : null}
@@ -80,7 +80,7 @@ export default function QuestionForm({
             className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
             {...register("categoryId")}
           >
-            <option value="">Kategori seciniz</option>
+            <option value="">Kategori seçiniz</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -107,7 +107,7 @@ export default function QuestionForm({
 
       <div className="space-y-3 rounded-md border border-stone-200 p-4 dark:border-stone-800">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-stone-900 dark:text-stone-100">Secenekler</h2>
+          <h2 className="font-semibold text-stone-900 dark:text-stone-100">Seçenekler</h2>
           <Button
             type="button"
             variant="outline"
@@ -116,13 +116,13 @@ export default function QuestionForm({
             disabled={fields.length >= 6}
           >
             <Plus className="h-4 w-4" />
-            Secenek Ekle
+            Seçenek Ekle
           </Button>
         </div>
 
         {fields.map((field, index) => (
           <div key={field.id} className="grid gap-2 md:grid-cols-[1fr_auto_auto] md:items-center">
-            <Input placeholder={`Secenek ${index + 1}`} {...register(`options.${index}.text`)} />
+            <Input placeholder={`Seçenek ${index + 1}`} {...register(`options.${index}.text`)} />
             <label className="inline-flex items-center gap-2 text-sm text-stone-700 dark:text-stone-200">
               <input
                 type="radio"
@@ -130,7 +130,7 @@ export default function QuestionForm({
                 checked={options[index]?.isCorrect || false}
                 onChange={() => setCorrectOption(index)}
               />
-              Dogru
+               Doğru
             </label>
             <Button type="button" variant="danger" onClick={() => remove(index)} disabled={fields.length <= 2}>
               <Trash2 className="h-4 w-4" />
@@ -147,7 +147,7 @@ export default function QuestionForm({
           {isSubmitting ? "Kaydediliyor..." : submitLabel}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Iptal
+          İptal
         </Button>
       </div>
     </form>

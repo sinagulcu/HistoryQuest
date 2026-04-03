@@ -16,16 +16,8 @@ public class CreateQuestionCommand
     {
         _questionRepository = questionRepository;
     }
-    public async Task<Guid> ExecuteAsync(
-        CreateQuestionRequest request,
-        Guid teacherId)
+    public async Task<Guid> ExecuteAsync(CreateQuestionRequest request, Guid teacherId)
     {
-        if (request.Options.Count < 2)
-            throw new BusinessRuleException("Question must have at least 2 option.");
-
-        if (request.Options.Count(o => o.IsCorrect) != 1)
-            throw new BusinessRuleException("Question must have exactly one correct option.");
-
         var question = Question.Create(
             request.Text,
             request.Difficulty,
@@ -33,14 +25,14 @@ public class CreateQuestionCommand
             teacherId,
             request.CategoryId,
             request.Explanation
-         );
+        );
 
         foreach (var option in request.Options)
+        {
             question.AddOption(option.Text, option.IsCorrect);
+        }
 
         await _questionRepository.AddAsync(question);
-
         return question.Id;
-
     }
 }

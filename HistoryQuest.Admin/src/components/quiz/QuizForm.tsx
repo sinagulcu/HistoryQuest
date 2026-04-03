@@ -44,17 +44,17 @@ export default function QuizForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="title">Baslik</Label>
-        <Input id="title" placeholder="Quiz basligi" {...register("title")} />
+        <Label htmlFor="title">Başlık</Label>
+        <Input id="title" placeholder="Quiz başlığı" {...register("title")} />
         {errors.title ? <p className="text-xs text-red-600">{errors.title.message}</p> : null}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">Aciklama</Label>
+        <Label htmlFor="description">Açıklama</Label>
         <textarea
           id="description"
           className="min-h-28 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
-          placeholder="Quiz aciklamasi"
+          placeholder="Quiz açıklaması"
           {...register("description")}
         />
         {errors.description ? <p className="text-xs text-red-600">{errors.description.message}</p> : null}
@@ -68,7 +68,7 @@ export default function QuizForm({
             className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
             {...register("categoryId")}
           >
-            <option value="">Kategori seciniz</option>
+            <option value="">Kategori seçiniz</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -92,14 +92,14 @@ export default function QuizForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="timeLimitMinutes">Sure Limiti (dakika)</Label>
+          <Label htmlFor="timeLimitMinutes">Süre Limiti (dakika)</Label>
           <Input id="timeLimitMinutes" type="number" min={1} {...register("timeLimitMinutes", { valueAsNumber: true })} />
           {errors.timeLimitMinutes ? <p className="text-xs text-red-600">{errors.timeLimitMinutes.message}</p> : null}
         </div>
 
         <div className="flex items-center gap-2 pt-7">
           <input id="isPublished" type="checkbox" className="h-4 w-4" {...register("isPublished")} />
-          <Label htmlFor="isPublished">Yayin durumunda baslat</Label>
+          <Label htmlFor="isPublished">Yayın durumunda başlat</Label>
         </div>
       </div>
 
@@ -108,7 +108,7 @@ export default function QuizForm({
           {isSubmitting ? "Kaydediliyor..." : submitLabel}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          Iptal
+          İptal
         </Button>
       </div>
     </form>

@@ -25,6 +25,8 @@ public class QuizRepository : IQuizRepository
     {
         var query = _context.Quizzes
             .Include(q => q.QuizQuestions)
+            .Include(q => q.Category)
+            .Include(q => q.CreatedByTeacher)
             .Where(q => q.CreatedByTeacherId == teacherId);
 
         if (!includeDeleted)
@@ -36,10 +38,12 @@ public class QuizRepository : IQuizRepository
     public async Task<Quiz?> GetByIdAsync(Guid quizId)
     {
         return await _context.Quizzes
-                .Include(q => q.QuizQuestions)
-                .ThenInclude(q => q.Question)
-                .ThenInclude(q => q.Options)
-                .FirstOrDefaultAsync(q => q.Id == quizId);
+            .Include(q => q.QuizQuestions)
+            .ThenInclude(qq => qq.Question)
+            .ThenInclude(q => q.Options)
+            .Include(q => q.Category)
+            .Include(q => q.CreatedByTeacher)
+            .FirstOrDefaultAsync(q => q.Id == quizId);
     }
 
     public async Task SaveChangesAsync()
