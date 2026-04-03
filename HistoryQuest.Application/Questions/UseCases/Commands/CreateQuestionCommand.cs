@@ -31,7 +31,7 @@ public class CreateQuestionCommand
             request.Difficulty,
             request.Type,
             teacherId,
-            request.CategoryId,   
+            request.CategoryId,
             request.Explanation
          );
 

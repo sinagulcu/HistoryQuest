@@ -23,6 +23,7 @@ public class QuizController : ControllerBase
     private readonly SoftDeleteQuizCommand _softDeleteQuizCommand;
     private readonly RestoreQuizCommand _restoreQuizCommand;
     private readonly RemoveQuestionFromQuizCommand _removeQuestionFromQuizCommand;
+    private readonly UpdateQuizCommand _updateQuizCommand;
 
     public QuizController(
         CreateQuizCommand createQuizCommand,
@@ -33,7 +34,8 @@ public class QuizController : ControllerBase
         UnpublishCommand unpublishQuizCommand,
         SoftDeleteQuizCommand softDeleteQuizCommand,
         RestoreQuizCommand restoreQuizCommand,
-        RemoveQuestionFromQuizCommand removeQuestionFromQuizCommand)
+        RemoveQuestionFromQuizCommand removeQuestionFromQuizCommand,
+        UpdateQuizCommand updateQuizCommand)
     {
         _createQuizCommand = createQuizCommand;
         _getMyQuizzesCommand = getMyQuizzesCommand;
@@ -44,6 +46,7 @@ public class QuizController : ControllerBase
         _softDeleteQuizCommand = softDeleteQuizCommand;
         _restoreQuizCommand = restoreQuizCommand;
         _removeQuestionFromQuizCommand = removeQuestionFromQuizCommand;
+        _updateQuizCommand = updateQuizCommand;
     }
 
     [HttpPost]
@@ -51,17 +54,27 @@ public class QuizController : ControllerBase
     public async Task<IActionResult> Create(CreateQuizRequest request)
     {
         var teacherIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (teacherIdClaim == null)
-            return Unauthorized();
+        if (teacherIdClaim == null) return Unauthorized();
 
         var teacherId = Guid.Parse(teacherIdClaim);
+        var quizId = await _createQuizCommand.ExecuteAsync(request, teacherId);
 
-        var quizId = await _createQuizCommand.ExecuteAsync(
-            request.Title,
-            request.Description,
-            teacherId);
+        return CreatedAtAction(nameof(GetQuizDetails), new { quizId }, new { quizId });
+    }
 
-        return CreatedAtAction(nameof(GetMyQuizzes), new { id = quizId }, quizId);
+    [HttpPut("update/{id}")]
+    [Authorize(Roles = "Teacher,Admin")]
+    public async Task<IActionResult> Update(Guid id, UpdateQuizRequest request)
+    {
+        var userIdClaim = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userIdClaim))
+            return Unauthorized();
+
+        var currentUserId = Guid.Parse(userIdClaim);
+        var isAdmin = User.IsInRole("Admin");
+
+        await _updateQuizCommand.ExecuteAsync(id, currentUserId, isAdmin, request);
+        return Ok();
     }
 
     [HttpGet("GetMyQuizzes")]
@@ -82,10 +95,12 @@ public class QuizController : ControllerBase
             Title = q.Title,
             Description = q.Description,
             CategoryId = q.CategoryId,
-            CategoryName = q.CategoryName,
+            CategoryName = q.Category != null ? q.Category.Name : null,
             CreatedTeacherId = q.CreatedByTeacherId,
-            CreatedTeacherUserName = q.CreatedTeacherUserName,
-            CreatedTeacherFullName = q.CreatedTeacherFullName,
+            TimeLimitMinutes = q.TimeLimitMinutes,
+            CreatedTeacherUserName = q.CreatedByTeacher != null ? q.CreatedByTeacher.UserName : null,
+            CreatedTeacherFullName = q.CreatedByTeacher != null
+             ? $"{q.CreatedByTeacher.FirstName} {q.CreatedByTeacher.LastName}".Trim() : null,
             Status = q.Status.ToString(),
             QuestionCount = q.QuestionCount,
             IsDeleted = q.IsDeleted,
@@ -122,11 +137,11 @@ public class QuizController : ControllerBase
             Title = quiz.Title,
             Description = quiz.Description,
             CategoryId = quiz.CategoryId,
-            CategoryName = quiz.CategoryName,
-            TimedLimitMinutes = quiz.TimedLimitMinutes,
+            CategoryName = quiz.Category != null ? quiz.Category.Name : null,
             CreatedTeacherId = quiz.CreatedByTeacherId,
-            CreatedTeacherUserName = quiz.CreatedTeacherUserName,
-            CreatedTeacherFullName = quiz.CreatedTeacherFullName,
+            CreatedTeacherUserName = quiz.CreatedByTeacher != null ? quiz.CreatedByTeacher.UserName : null,
+            CreatedTeacherFullName = quiz.CreatedByTeacher != null
+                ? $"{quiz.CreatedByTeacher.FirstName} {quiz.CreatedByTeacher.LastName}".Trim() : null,
             QuizQuestions = [.. quiz.QuizQuestions
             .OrderBy(q => q.Order)
             .Select(q => new QuizQuestionDto

@@ -13,29 +13,44 @@ public class Question
     public QuestionType Type { get; private set; }
     public Guid CreatedByTeacherId { get; private set; }
     public string? Explanation { get; private set; }
-    public Guid? CategoryId { get; set; }
-    public string? CategoryName { get; set; }
+
+
+    public Guid? CategoryId { get; private set; }
+
+    public User? CreatedByTeacher { get; private set; }
+    public Category? Category { get; private set; }
+
     public List<QuestionOption> Options { get; private set; } = [];
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
 
-    protected Question(
+
+    protected Question() { }
+
+    private Question(
         string text,
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid createdByTeacherId,
-        Guid categoryId,
-        string? categoryName,
+        Guid? categoryId,
         string? explanation,
         bool isDeleted = false)
     {
-        Text = text;
+        if (string.IsNullOrWhiteSpace(text))
+            throw new BusinessRuleException("Question text cannot be empty.");
+
+        if (createdByTeacherId == Guid.Empty)
+            throw new BusinessRuleException("CreatedByTeacherId is required.");
+
+        if (categoryId == Guid.Empty)
+            throw new BusinessRuleException("CategoryId is required.");
+
+        Text = text.Trim();
         Difficulty = difficulty;
         Type = type;
         CreatedByTeacherId = createdByTeacherId;
         CategoryId = categoryId;
-        CategoryName = categoryName;
-        Explanation = explanation;
+        Explanation = string.IsNullOrWhiteSpace(explanation) ? null : explanation.Trim();
         IsDeleted = isDeleted;
         DeletedAt = null;
     }
@@ -45,12 +60,11 @@ public class Question
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid teacherId,
-        Guid categoryId,
-        string? categoryName = "",
+        Guid? categoryId,
         string? explanation = "")
     {
-        return new Question(text, difficulty, type, teacherId, categoryId, categoryName,explanation);
-    }   
+        return new Question(text, difficulty, type, teacherId, categoryId, explanation);
+    }
 
     public void Update(
         string text,
@@ -58,9 +72,13 @@ public class Question
         string? explanation,
         List<UpdateQuestionOptionRequest> updatedOptions)
     {
-        Text = text;
+        if (string.IsNullOrWhiteSpace(text))
+            throw new BusinessRuleException("Question text cannot be empty.");
+
+        Text = text.Trim();
         Difficulty = difficulty;
-        Explanation = explanation;
+        Explanation = string.IsNullOrWhiteSpace(explanation) ? null : explanation.Trim();
+
         foreach (var dto in updatedOptions)
         {
             if (dto.Id.HasValue)
@@ -73,22 +91,24 @@ public class Question
                 existing.Update(dto.Text, dto.IsCorrect);
             }
             else
+            {
                 Options.Add(new QuestionOption(dto.Text, dto.IsCorrect));
-
-            var idsFromRequest = updatedOptions
-                .Select(o => o.Id)
-                .OfType<Guid>()
-                .ToList();
-
-            var toDelete = Options
-                .Where(o => !idsFromRequest.Contains(o.Id))
-                .ToList();
-
-            foreach (var option in toDelete)
-                Options.Remove(option);
-
-            ValidateSingleCorrectOption();
+            }
         }
+
+        var idsFromRequest = updatedOptions
+            .Select(o => o.Id)
+            .OfType<Guid>()
+            .ToList();
+
+        var toDelete = Options
+            .Where(o => !idsFromRequest.Contains(o.Id))
+            .ToList();
+
+        foreach (var option in toDelete)
+            Options.Remove(option);
+
+        ValidateSingleCorrectOption();
     }
 
     public void AddOption(string text, bool isCorrect)

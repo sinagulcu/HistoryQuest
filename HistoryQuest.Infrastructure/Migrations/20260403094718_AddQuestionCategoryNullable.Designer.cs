@@ -4,6 +4,7 @@ using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HistoryQuest.Infrastructure.Migrations
 {
     [DbContext(typeof(HistoryQuestDbContext))]
-    partial class HistoryQuestDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403094718_AddQuestionCategoryNullable")]
+    partial class AddQuestionCategoryNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,7 +92,7 @@ namespace HistoryQuest.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("CategoryId")
+                    b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("CreatedByTeacherId")
@@ -156,11 +159,20 @@ namespace HistoryQuest.Infrastructure.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CategoryName")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid>("CreatedByTeacherId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedTeacherFullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedTeacherUserName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("datetime2");
@@ -174,7 +186,7 @@ namespace HistoryQuest.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<int>("TimeLimitMinutes")
+                    b.Property<int>("TimedLimitMinutes")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -182,10 +194,6 @@ namespace HistoryQuest.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("CreatedByTeacherId");
 
                     b.ToTable("Quizzes");
                 });
@@ -457,7 +465,8 @@ namespace HistoryQuest.Infrastructure.Migrations
                     b.HasOne("HistoryQuest.Domain.Entities.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("HistoryQuest.Domain.Entities.User", "CreatedByTeacher")
                         .WithMany()
@@ -476,25 +485,6 @@ namespace HistoryQuest.Infrastructure.Migrations
                         .WithMany("Options")
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("HistoryQuest.Domain.Entities.Quiz", b =>
-                {
-                    b.HasOne("HistoryQuest.Domain.Entities.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("HistoryQuest.Domain.Entities.User", "CreatedByTeacher")
-                        .WithMany()
-                        .HasForeignKey("CreatedByTeacherId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("CreatedByTeacher");
                 });
 
             modelBuilder.Entity("HistoryQuest.Domain.Entities.QuizAttempt", b =>

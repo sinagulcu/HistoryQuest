@@ -11,11 +11,11 @@ public class Quiz
     public string Title { get; private set; } = null!;
     public string? Description { get; private set; } = null;
     public Guid CreatedByTeacherId { get; private set; }
-    public Guid CategoryId { get; set; }
-    public string? CategoryName { get; set; }
-    public int TimedLimitMinutes { get; set; }
-    public string? CreatedTeacherUserName { get; set; }
-    public string? CreatedTeacherFullName { get; set; }
+    public Guid CategoryId { get; private set; }
+    public int TimeLimitMinutes { get; private set; }
+
+    public Category? Category { get; private set; }
+    public User? CreatedByTeacher { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public QuizStatus Status { get; private set; } = QuizStatus.Draft;
 
@@ -35,24 +35,58 @@ public class Quiz
         CreatedByTeacherId = teacherId;
     }
 
-    public static Quiz Create(string title, string? description, Guid teacherId)
+    public static Quiz Create(string title, string? description, Guid teacherId,
+        Guid categoryId, int timeLimitMinutes)
     {
-        return new Quiz(title, description, teacherId);
+        if (string.IsNullOrWhiteSpace(title))
+            throw new BusinessRuleException("Quiz title cannot be empty.");
+        if (string.IsNullOrWhiteSpace(description))
+            throw new BusinessRuleException("Quiz description cannot be empty.");
+        if (categoryId == Guid.Empty)
+            throw new BusinessRuleException("Quiz must have a valid category.");
+        if (timeLimitMinutes < 1)
+            throw new BusinessRuleException("Time limit must be ar least 1 minute.");
+
+        return new Quiz
+        {
+            Id = Guid.NewGuid(),
+            Title = title.Trim(),
+            Description = description.Trim(),
+            CreatedByTeacherId = teacherId,
+            CategoryId = categoryId,
+            TimeLimitMinutes = timeLimitMinutes,
+            Status = QuizStatus.Draft,
+            IsDeleted = false
+        };
+
     }
 
-    public void Update(string title, string? description)
+    public void Update(string title, string description, Guid categoryId, int timeLimitMinutes)
     {
+        if (string.IsNullOrWhiteSpace(title))
+            throw new BusinessRuleException("Quiz title cannot be empty.");
+
+        if (string.IsNullOrWhiteSpace(description))
+            throw new BusinessRuleException("Quiz description cannot be empty.");
+
+        if (categoryId == Guid.Empty)
+            throw new BusinessRuleException("Quiz must have a valid category.");
+        if (timeLimitMinutes < 1)
+            throw new BusinessRuleException("Time limit must be ar least 1 minute.");
+
         EnsureEditable();
 
-        Title = title;
-        Description = description;
+        Title = title.Trim();
+        Description = description.Trim();
+        CategoryId = categoryId;
+        TimeLimitMinutes = timeLimitMinutes;
     }
 
     public void Publish()
     {
         if (!QuizQuestions.Any())
             throw new BusinessRuleException("Quiz must contain at least one question before publishing.");
-        if(Status != QuizStatus.Draft)
+        if (Status != QuizStatus.Draft)
             throw new BusinessRuleException("Only quizzes in Draft status can be published.");
 
         Status = QuizStatus.Published;

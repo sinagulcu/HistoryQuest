@@ -27,6 +27,24 @@ public class HistoryQuestDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<Quiz>()
+            .HasOne(q => q.CreatedByTeacher)
+            .WithMany()
+            .HasForeignKey(q => q.CreatedByTeacherId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Quiz>()
+            .HasOne(q => q.Category)
+            .WithMany()
+            .HasForeignKey(q => q.CategoryId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Question>()
+            .HasOne(q => q.Category)
+            .WithMany()
+            .HasForeignKey(q => q.CategoryId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         modelBuilder.Entity<QuizQuestion>()
             .HasKey(qq => new { qq.QuizId, qq.QuestionId });
 
