@@ -111,7 +111,10 @@ export default function QuestionEditPage() {
 
   return (
     <div className="space-y-6">
-      <PageSection title={`Soru Duzenle #${id}`} description="Soru metni ve seceneklerini guncelleyin." />
+      <PageSection
+        title={question ? `${question.text.slice(0, 64)}${question.text.length > 64 ? "..." : ""}` : "Soru Duzenle"}
+        description="Soru metni ve seceneklerini guncelleyin."
+      />
 
       {loading ? <LoadingState message="Soru yukleniyor..." /> : null}
 

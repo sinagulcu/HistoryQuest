@@ -11,6 +11,11 @@ public class Quiz
     public string Title { get; private set; } = null!;
     public string? Description { get; private set; } = null;
     public Guid CreatedByTeacherId { get; private set; }
+    public Guid CategoryId { get; set; }
+    public string? CategoryName { get; set; }
+    public int TimedLimitMinutes { get; set; }
+    public string? CreatedTeacherUserName { get; set; }
+    public string? CreatedTeacherFullName { get; set; }
     public DateTime CreatedAt { get; private set; }
     public QuizStatus Status { get; private set; } = QuizStatus.Draft;
 

@@ -56,6 +56,11 @@ public class QuestionRepository : IQuestionRepository
                 Text = q.Text,
                 TextPreview = q.Text.Length > 100 ? q.Text.Substring(0, 100) + "..." : q.Text,
                 Difficulty = q.Difficulty.ToString(),
+                CategoryId = q.CategoryId,
+                CategoryName = _context.Categories
+                .Where(c => c.Id == q.CategoryId)
+                .Select(c => c.Name)
+                .FirstOrDefault(),
                 CreatedByTeacherId = q.CreatedByTeacherId,
                 CreatedByTeacherUserName = _context.Users
                 .Where(u => u.Id == q.CreatedByTeacherId)

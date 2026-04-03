@@ -29,6 +29,24 @@ const decodeJwtPayload = (token?: string) => {
   }
 };
 
+const decodeJwtPayloadText = (token?: string) => {
+  if (!token) {
+    return "";
+  }
+
+  try {
+    const part = token.split(".")[1];
+    if (!part) {
+      return "";
+    }
+    const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    return atob(padded).toLowerCase();
+  } catch {
+    return "";
+  }
+};
+
 const mapRole = (value: unknown): "Admin" | "Teacher" | "Student" | null => {
   if (Array.isArray(value) && value.length > 0) {
     const normalizedRoles = value
@@ -59,6 +77,17 @@ const mapRole = (value: unknown): "Admin" | "Teacher" | "Student" | null => {
   }
 
   const role = typeof value === "string" ? value.toLowerCase() : "";
+
+  // Some backends serialize multiple roles as "Admin,Teacher" or "[\"Admin\",\"Teacher\"]".
+  if (role.includes(",")) {
+    const roleParts = role.split(",").map((item) => item.trim());
+    return mapRole(roleParts);
+  }
+  if (role.startsWith("[") && role.endsWith("]")) {
+    const normalized = role.replace(/[\[\]"]+/g, "");
+    const roleParts = normalized.split(",").map((item) => item.trim());
+    return mapRole(roleParts);
+  }
 
   if (role === "admin") {
     return "Admin";
@@ -112,6 +141,17 @@ const normalizeLoginResponse = (raw: unknown): LoginResponseDto => {
     mapRole(unwrapped.roleType) ??
     mapRole(roleFromClaims);
 
+  const payloadText = decodeJwtPayloadText(tokenFromResponse);
+  const inferredRoleFromPayload =
+    roleCandidate ??
+    (payloadText.includes("admin")
+      ? "Admin"
+      : payloadText.includes("teacher")
+        ? "Teacher"
+        : payloadText.includes("student")
+          ? "Student"
+          : null);
+
   return {
     token: tokenFromResponse,
     accessToken: typeof unwrapped.accessToken === "string" ? unwrapped.accessToken : undefined,
@@ -121,7 +161,7 @@ const normalizeLoginResponse = (raw: unknown): LoginResponseDto => {
       id: String(userRaw.id ?? unwrapped.userId ?? unwrapped.id ?? idFromClaims ?? ""),
       userName: String(userRaw.userName ?? userRaw.username ?? unwrapped.userName ?? unwrapped.username ?? userNameFromClaims ?? ""),
       email: String(userRaw.email ?? unwrapped.email ?? emailFromClaims ?? ""),
-      role: roleCandidate ?? "Teacher",
+      role: inferredRoleFromPayload ?? "Teacher",
     },
   };
 };

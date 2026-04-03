@@ -22,7 +22,7 @@ export const questionOptionSchema = z.object({
 export const questionSchema = z
   .object({
     text: z.string().min(10, "Soru metni en az 10 karakter olmalı"),
-    categoryId: z.number().positive("Kategori seçiniz"),
+    categoryId: z.string().min(1, "Kategori seciniz"),
     difficultyLevel: z.number().min(1).max(3),
     options: z.array(questionOptionSchema).min(2, "En az 2 seçenek olmalı").max(6, "En fazla 6 seçenek olabilir"),
   })
@@ -36,7 +36,7 @@ export type QuestionFormValues = z.infer<typeof questionSchema>;
 export const quizSchema = z.object({
   title: z.string().min(3, "Baslik en az 3 karakter olmali"),
   description: z.string().min(10, "Aciklama en az 10 karakter olmali"),
-  categoryId: z.number().positive("Kategori seciniz"),
+  categoryId: z.string().min(1, "Kategori seciniz"),
   difficultyLevel: z.number().min(1).max(3),
   timeLimitMinutes: z.number().min(1, "Sure en az 1 dakika olmali"),
   isPublished: z.boolean(),

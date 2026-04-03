@@ -13,6 +13,8 @@ public class Question
     public QuestionType Type { get; private set; }
     public Guid CreatedByTeacherId { get; private set; }
     public string? Explanation { get; private set; }
+    public Guid? CategoryId { get; set; }
+    public string? CategoryName { get; set; }
     public List<QuestionOption> Options { get; private set; } = [];
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
@@ -22,6 +24,8 @@ public class Question
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid createdByTeacherId,
+        Guid categoryId,
+        string? categoryName,
         string? explanation,
         bool isDeleted = false)
     {
@@ -29,6 +33,8 @@ public class Question
         Difficulty = difficulty;
         Type = type;
         CreatedByTeacherId = createdByTeacherId;
+        CategoryId = categoryId;
+        CategoryName = categoryName;
         Explanation = explanation;
         IsDeleted = isDeleted;
         DeletedAt = null;
@@ -39,10 +45,12 @@ public class Question
         QuestionDifficulty difficulty,
         QuestionType type,
         Guid teacherId,
-        string? explanation = null)
+        Guid categoryId,
+        string? categoryName = "",
+        string? explanation = "")
     {
-        return new Question(text, difficulty, type, teacherId, explanation);
-    }
+        return new Question(text, difficulty, type, teacherId, categoryId, categoryName,explanation);
+    }   
 
     public void Update(
         string text,
@@ -99,19 +107,19 @@ public class Question
 
     public void DeleteByUser(Guid userId, bool isAdmin)
     {
-        if(!isAdmin && CreatedByTeacherId != userId)
+        if (!isAdmin && CreatedByTeacherId != userId)
             throw new UnauthorizedException("Only the creator or an admin can delete this question.");
 
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
     }
 
-    public void Restore(Guid userId, bool isAdmin) 
+    public void Restore(Guid userId, bool isAdmin)
     {
-        if(!IsDeleted)
+        if (!IsDeleted)
             throw new BusinessRuleException("Question is not deleted.");
 
-        if(!isAdmin && CreatedByTeacherId != userId)
+        if (!isAdmin && CreatedByTeacherId != userId)
             throw new UnauthorizedException("Only the creator or an admin can restore this question.");
 
         IsDeleted = false;

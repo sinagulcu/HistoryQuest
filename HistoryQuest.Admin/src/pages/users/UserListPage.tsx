@@ -146,9 +146,11 @@ export default function UserListPage() {
           <table className="min-w-full divide-y divide-stone-200 dark:divide-stone-800">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                <th className="px-4 py-3">Ad Soyad</th>
                 <th className="px-4 py-3">Kullanici Adi</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Rol</th>
+                <th className="px-4 py-3">Skor</th>
                 <th className="px-4 py-3">Kayit Tarihi</th>
                 <th className="px-4 py-3 text-right">Islemler</th>
               </tr>
@@ -159,6 +161,7 @@ export default function UserListPage() {
 
                 return (
                   <tr key={targetUser.id} className="text-sm text-stone-700 dark:text-stone-200">
+                    <td className="px-4 py-3">{targetUser.fullName || [targetUser.firstName, targetUser.lastName].filter(Boolean).join(" ") || "-"}</td>
                     <td className="px-4 py-3">{targetUser.userName}</td>
                     <td className="px-4 py-3">{targetUser.email}</td>
                     <td className="px-4 py-3">
@@ -166,6 +169,7 @@ export default function UserListPage() {
                         {targetUser.role}
                       </span>
                     </td>
+                    <td className="px-4 py-3">{typeof targetUser.score === "number" ? targetUser.score.toLocaleString("tr-TR") : "-"}</td>
                     <td className="px-4 py-3">{formatCreatedAt(targetUser)}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">

@@ -30,7 +30,7 @@ export default function QuestionListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [difficultyFilter, setDifficultyFilter] = useState<number | "all">("all");
   const [creatorFilter, setCreatorFilter] = useState<"all" | "mine" | "others">("all");
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
@@ -43,7 +43,23 @@ export default function QuestionListPage() {
     setError(null);
     try {
       const [questionsResponse, categoriesResponse] = await Promise.all([questionApi.getAll(), categoryApi.getAll()]);
-      setQuestions(questionsResponse.data);
+
+      const baseQuestions = questionsResponse.data;
+      const detailTargets = baseQuestions.filter((question) => !question.categoryId);
+
+      let enrichedQuestions = baseQuestions;
+      if (detailTargets.length > 0) {
+        const detailResults = await Promise.allSettled(detailTargets.map((question) => questionApi.getById(question.id)));
+        const detailMap = new Map(
+          detailResults
+            .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof questionApi.getById>>> => result.status === "fulfilled")
+            .map((result) => [result.value.data.id, result.value.data])
+        );
+
+        enrichedQuestions = baseQuestions.map((question) => detailMap.get(question.id) || question);
+      }
+
+      setQuestions(enrichedQuestions);
       setCategories(categoriesResponse.data);
     } catch (requestError) {
       const message =
@@ -82,7 +98,7 @@ export default function QuestionListPage() {
     if (question.categoryName) {
       return question.categoryName;
     }
-    return categories.find((category) => category.id === question.categoryId)?.name || `#${question.categoryId}`;
+    return categories.find((category) => category.id === question.categoryId)?.name || "Belirtilmedi";
   };
 
   const canManageQuestion = (question: Question) => {
@@ -154,7 +170,7 @@ export default function QuestionListPage() {
           value={categoryFilter}
           onChange={(event) => {
             const value = event.target.value;
-            setCategoryFilter(value === "all" ? "all" : Number(value));
+            setCategoryFilter(value === "all" ? "all" : value);
           }}
         >
           <option value="all">Tum kategoriler</option>
@@ -219,7 +235,7 @@ export default function QuestionListPage() {
                     <td className="px-4 py-3">{getCategoryName(question)}</td>
                     <td className="px-4 py-3">{difficultyText[question.difficultyLevel] || "-"}</td>
                     <td className="px-4 py-3">{question.options?.length || "-"}</td>
-                    <td className="px-4 py-3">{question.createdByUserName || question.createdByUserId}</td>
+                    <td className="px-4 py-3">{question.createdByUserFullName || question.createdByUserName || "-"}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                          <Button variant="outline" onClick={() => handlePreview(question.id)} className="gap-2">

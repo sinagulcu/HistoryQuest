@@ -9,19 +9,42 @@ const normalizeQuestion = (raw: unknown): Question => {
   const optionsRaw = Array.isArray(item.options) ? item.options : [];
 
   return {
-    id: String(item.id ?? item.questionId ?? ""),
-    text: String(item.text ?? ""),
-    categoryId: typeof item.categoryId === "number" ? item.categoryId : 0,
-    categoryName: typeof item.categoryName === "string" ? item.categoryName : undefined,
+    id: String(item.id ?? item.questionId ?? item.Id ?? ""),
+    text: String(item.text ?? item.questionText ?? item.Text ?? ""),
+    categoryId: String(item.categoryId ?? item.CategoryId ?? item.categoryID ?? ""),
+    categoryName:
+      typeof item.categoryName === "string"
+        ? item.categoryName
+        : typeof item.CategoryName === "string"
+          ? item.CategoryName
+          : item.category && typeof item.category === "object"
+            ? String(unwrapApiData<Record<string, unknown>>(item.category).name ?? "")
+            : typeof item.category === "string"
+              ? item.category
+          : undefined,
     difficultyLevel: toDifficultyLevel(item.difficulty ?? item.difficultyLevel),
     createdByUserId: String(item.createdByUserId ?? item.createdByTeacherId ?? ""),
     createdByUserName:
       typeof item.createdByUserName === "string"
         ? item.createdByUserName
+        : typeof item.createdByTeacherUserName === "string"
+          ? item.createdByTeacherUserName
         : typeof item.createdByTeacherName === "string"
           ? item.createdByTeacherName
           : undefined,
-    createdAt: normalizeServerDateString(typeof item.createdAt === "string" ? item.createdAt : undefined),
+    createdByUserFullName:
+      typeof item.createdByUserFullName === "string"
+        ? item.createdByUserFullName
+        : typeof item.createdByTeacherFullName === "string"
+          ? item.createdByTeacherFullName
+          : undefined,
+    createdAt: normalizeServerDateString(
+      typeof item.createdAt === "string"
+        ? item.createdAt
+        : typeof item.CreatedAt === "string"
+          ? item.CreatedAt
+          : undefined
+    ),
     options: optionsRaw.map((option) => {
       const optionRecord = unwrapApiData<Record<string, unknown>>(option);
       return {

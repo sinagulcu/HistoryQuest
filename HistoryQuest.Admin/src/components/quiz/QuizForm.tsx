@@ -18,7 +18,7 @@ interface QuizFormProps {
 const defaultValues: QuizFormValues = {
   title: "",
   description: "",
-  categoryId: 0,
+  categoryId: "",
   difficultyLevel: 1,
   timeLimitMinutes: 10,
   isPublished: false,
@@ -66,9 +66,9 @@ export default function QuizForm({
           <select
             id="categoryId"
             className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm outline-none ring-[#b99647] focus:ring-2 dark:border-stone-700 dark:bg-stone-900"
-            {...register("categoryId", { valueAsNumber: true })}
+            {...register("categoryId")}
           >
-            <option value={0}>Kategori seciniz</option>
+            <option value="">Kategori seciniz</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}

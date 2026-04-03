@@ -81,6 +81,11 @@ public class QuizController : ControllerBase
             Id = q.Id,
             Title = q.Title,
             Description = q.Description,
+            CategoryId = q.CategoryId,
+            CategoryName = q.CategoryName,
+            CreatedTeacherId = q.CreatedByTeacherId,
+            CreatedTeacherUserName = q.CreatedTeacherUserName,
+            CreatedTeacherFullName = q.CreatedTeacherFullName,
             Status = q.Status.ToString(),
             QuestionCount = q.QuestionCount,
             IsDeleted = q.IsDeleted,
@@ -115,6 +120,13 @@ public class QuizController : ControllerBase
         {
             Id = quiz.Id,
             Title = quiz.Title,
+            Description = quiz.Description,
+            CategoryId = quiz.CategoryId,
+            CategoryName = quiz.CategoryName,
+            TimedLimitMinutes = quiz.TimedLimitMinutes,
+            CreatedTeacherId = quiz.CreatedByTeacherId,
+            CreatedTeacherUserName = quiz.CreatedTeacherUserName,
+            CreatedTeacherFullName = quiz.CreatedTeacherFullName,
             QuizQuestions = [.. quiz.QuizQuestions
             .OrderBy(q => q.Order)
             .Select(q => new QuizQuestionDto

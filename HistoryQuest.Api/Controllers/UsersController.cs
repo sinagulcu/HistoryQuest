@@ -1,4 +1,6 @@
 ﻿using HistoryQuest.Application.Auth.UseCases;
+using HistoryQuest.Application.Users.UseCases;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HistoryQuest.Api.Controllers;
@@ -13,6 +15,23 @@ public class UsersController : ControllerBase
     {
         _deleteUserCommand = deleteUserCommand;
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromServices] GetUsersQuery query)
+    {
+        var data = await query.ExecuteAsync();
+        return Ok(data);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpGet("count")]
+    public async Task<IActionResult> GetCount([FromServices] GetUserCountQuery query)
+    {
+        var count = await query.ExecuteAsync();
+        return Ok(count);
+    }
+
 
     [HttpDelete("{id.guid}")]
     public async Task<IActionResult> Delete(Guid id)

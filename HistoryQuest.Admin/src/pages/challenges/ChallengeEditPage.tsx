@@ -120,7 +120,10 @@ export default function ChallengeEditPage() {
         questionId: challenge.questionId,
         scheduledAt: toDateTimeLocalValue(challenge.scheduledAtUtc),
         scoringDurationMinutes: Math.max(1, Math.floor(challenge.answerWindowSeconds / 60)),
-        lateDurationMinutes: Math.max(1, Math.floor(challenge.visibilityWindowSeconds / 60)),
+        lateDurationMinutes: Math.max(
+          1,
+          Math.floor((challenge.visibilityWindowSeconds - challenge.answerWindowSeconds) / 60)
+        ),
         maxScore: challenge.maxScore,
         showCorrectAnswerOnWrong: challenge.showCorrectAnswerOnWrong,
         showExplanationOnWrong: challenge.showExplanationOnWrong,

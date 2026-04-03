@@ -103,7 +103,7 @@ export default function QuizEditPage() {
 
   return (
     <div className="space-y-6">
-      <PageSection title={`Quiz Duzenle #${id}`} description="Quiz bilgilerini guncelleyin." />
+      <PageSection title={quiz ? `${quiz.title} Duzenle` : "Quiz Duzenle"} description="Quiz bilgilerini guncelleyin." />
 
       {loading ? <LoadingState message="Quiz yukleniyor..." /> : null}
 

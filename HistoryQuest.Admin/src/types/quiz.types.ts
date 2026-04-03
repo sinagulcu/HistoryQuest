@@ -2,7 +2,7 @@ export interface Quiz {
   id: string;
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   categoryName?: string;
   difficultyLevel: number;
   timeLimitMinutes: number;
@@ -10,6 +10,7 @@ export interface Quiz {
   createdByUserId: string;
   createdByUserName?: string;
   createdAt?: string;
+  questionCount?: number;
   questions?: QuizQuestion[];
 }
 
@@ -22,7 +23,7 @@ export interface QuizQuestionOption {
 export interface QuizQuestion {
   id: string;
   text: string;
-  categoryId: number;
+  categoryId: string;
   categoryName?: string;
   difficultyLevel: number;
   createdByUserId: string;
@@ -33,7 +34,7 @@ export interface QuizQuestion {
 export interface QuizCreateDto {
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   difficultyLevel: number;
   timeLimitMinutes: number;
   isPublished: boolean;
@@ -42,7 +43,7 @@ export interface QuizCreateDto {
 export interface QuizUpdateDto {
   title: string;
   description: string;
-  categoryId: number;
+  categoryId: string;
   difficultyLevel: number;
   timeLimitMinutes: number;
   isPublished: boolean;

@@ -20,14 +20,14 @@ public class AddQuestionToQuizCommand
         var quiz = await _quizRepository.GetByIdAsync(quizId);
         if (quiz == null) throw new NotFoundException("Quiz not found.");
 
+        if(quiz.CreatedByTeacherId != teacherId)
+            throw new UnauthorizedException("You cannot modify this quiz.");
+
         quiz.EnsureEditable();
 
         var question = await _questionRepository.GetByIdAsync(questionId);
         if (question == null || question.IsDeleted)
             throw new NotFoundException("Question not found or deleted.");
-
-        if (question.CreatedByTeacherId != teacherId)
-            throw new UnauthorizedException("You cannot add this question.");
 
         if (quiz.QuizQuestions.Any(q => q.QuestionId == questionId))
             throw new BusinessRuleException("Question already added to this quiz.");

@@ -1,11 +1,12 @@
 export interface Question {
   id: string;
   text: string;
-  categoryId: number;
+  categoryId: string;
   categoryName?: string;
   difficultyLevel: number;
   createdByUserId: string;
   createdByUserName?: string;
+  createdByUserFullName?: string;
   createdAt?: string;
   options?: QuestionOption[];
 }
@@ -18,14 +19,14 @@ export interface QuestionOption {
 
 export interface QuestionCreateDto {
   text: string;
-  categoryId: number;
+  categoryId: string;
   difficultyLevel: number;
   options: QuestionOption[];
 }
 
 export interface QuestionUpdateDto {
   text: string;
-  categoryId: number;
+  categoryId: string;
   difficultyLevel: number;
   options: QuestionOption[];
 }

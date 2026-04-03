@@ -9,6 +9,9 @@ public class QuestionListItemDto
     public string Text { get; set; } = string.Empty;
     public string Difficulty { get; set; } = string.Empty;
 
+    public Guid? CategoryId { get; set; }
+    public string? CategoryName { get; set; }
+
     public Guid CreatedByTeacherId { get; set; }
 
     public string CreatedByTeacherFullName { get; set; } = string.Empty;

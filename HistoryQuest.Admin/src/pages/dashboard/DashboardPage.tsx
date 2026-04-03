@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { categoryApi } from "@/api/category.api";
 import { questionApi } from "@/api/question.api";
 import { quizApi } from "@/api/quiz.api";
+import { userApi } from "@/api/user.api";
 import ErrorState from "@/components/shared/ErrorState";
 import LoadingState from "@/components/shared/LoadingState";
 import PageSection from "@/components/shared/PageSection";
@@ -62,7 +63,7 @@ function formatDateTime(value: string | undefined) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === "Admin";
+  const isAdmin = String(user?.role ?? "").toLowerCase() === "admin";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -96,22 +97,72 @@ export default function DashboardPage() {
         totalUsers: 0,
       });
 
+      let totalUsers = 0;
+      try {
+        const userCountResponse = await userApi.getCount();
+        totalUsers = userCountResponse.data.totalUsers;
+      } catch {
+        totalUsers = 0;
+      }
+
+      try {
+        const usersResponse = await userApi.getAll();
+        const roleCounter: Record<string, number> = { Admin: 0, Teacher: 0, Student: 0 };
+        usersResponse.data.forEach((u) => {
+          if (u.role in roleCounter) {
+            roleCounter[u.role] += 1;
+          }
+        });
+
+        setRoleDistribution([
+          { name: "Admin", value: roleCounter.Admin },
+          { name: "Teacher", value: roleCounter.Teacher },
+          { name: "Student", value: roleCounter.Student },
+        ]);
+
+        if (totalUsers <= 0) {
+          totalUsers = usersResponse.data.length;
+        }
+      } catch {
+        setRoleDistribution([]);
+      }
+
+      setKpiStats((prev) => ({ ...prev, totalUsers }));
+
       const sortedQuizzes = [...quizzes].sort(
         (a, b) => getTimestamp(b.createdAt, b.id) - getTimestamp(a.createdAt, a.id)
       );
       const sortedQuestions = [...questions].sort(
         (a, b) => getTimestamp(b.createdAt, b.id) - getTimestamp(a.createdAt, a.id)
       );
-      setLatestQuizzes(sortedQuizzes.slice(0, 5));
-      setLatestQuestions(sortedQuestions.slice(0, 5));
 
-      const categoryNameById = new Map<number, string>(categories.map((category: Category) => [category.id, category.name]));
-      const categoryCounter = new Map<number, number>();
+      const latestQuestionCandidates = sortedQuestions.slice(0, 5);
+      const missingDateCandidates = latestQuestionCandidates.filter((question) => !question.createdAt);
+      if (missingDateCandidates.length > 0) {
+        const detailResults = await Promise.allSettled(
+          missingDateCandidates.map((question) => questionApi.getById(question.id))
+        );
+        const detailMap = new Map(
+          detailResults
+            .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof questionApi.getById>>> => result.status === "fulfilled")
+            .map((result) => [result.value.data.id, result.value.data])
+        );
+
+        setLatestQuestions(
+          latestQuestionCandidates.map((question) => detailMap.get(question.id) || question)
+        );
+      } else {
+        setLatestQuestions(latestQuestionCandidates);
+      }
+      setLatestQuizzes(sortedQuizzes.slice(0, 5));
+
+      const categoryNameById = new Map<string, string>(categories.map((category: Category) => [category.id, category.name]));
+      const categoryCounter = new Map<string, number>();
       questions.forEach((question) => {
         categoryCounter.set(question.categoryId, (categoryCounter.get(question.categoryId) ?? 0) + 1);
       });
       const categoryChartData = Array.from(categoryCounter.entries()).map(([categoryId, count]) => ({
-        name: categoryNameById.get(categoryId) ?? `Kategori #${categoryId}`,
+        name: categoryNameById.get(categoryId) ?? "Kategori belirtilmemis",
         value: count,
       }));
       setCategoryDistribution(categoryChartData);
@@ -128,9 +179,7 @@ export default function DashboardPage() {
         { name: "Zor", value: difficultyCounter[3] },
       ]);
 
-      if (isAdmin) {
-        setRoleDistribution([]);
-      } else {
+      if (!isAdmin) {
         setRoleDistribution([]);
       }
 
@@ -152,14 +201,11 @@ export default function DashboardPage() {
       { title: "Toplam Quiz", value: kpiStats.totalQuizzes, icon: BarChart3 },
       { title: "Toplam Soru", value: kpiStats.totalQuestions, icon: FileQuestion },
       { title: "Toplam Deneme", value: kpiStats.totalAttempts, icon: BarChart3 },
+      { title: "Toplam Kullanici", value: kpiStats.totalUsers, icon: Users2 },
     ];
 
-    if (isAdmin) {
-      cards.push({ title: "Toplam Kullanici", value: kpiStats.totalUsers, icon: Users2 });
-    }
-
     return cards;
-  }, [isAdmin, kpiStats.totalAttempts, kpiStats.totalQuestions, kpiStats.totalQuizzes, kpiStats.totalUsers]);
+  }, [kpiStats.totalAttempts, kpiStats.totalQuestions, kpiStats.totalQuizzes, kpiStats.totalUsers]);
 
   return (
     <div className="space-y-6">

@@ -30,7 +30,7 @@ export default function QuizListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [difficultyFilter, setDifficultyFilter] = useState<number | "all">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -42,7 +42,25 @@ export default function QuizListPage() {
     setError(null);
     try {
       const [quizResponse, categoryResponse] = await Promise.all([quizApi.getAll(), categoryApi.getAll()]);
-      setQuizzes(quizResponse.data);
+
+      const baseQuizzes = quizResponse.data;
+      const detailTargets = baseQuizzes.filter(
+        (quiz) => !quiz.categoryId || !quiz.createdByUserName || !quiz.timeLimitMinutes
+      );
+
+      let enrichedQuizzes = baseQuizzes;
+      if (detailTargets.length > 0) {
+        const detailResults = await Promise.allSettled(detailTargets.map((quiz) => quizApi.getById(quiz.id)));
+        const detailMap = new Map(
+          detailResults
+            .filter((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof quizApi.getById>>> => result.status === "fulfilled")
+            .map((result) => [result.value.data.id, result.value.data])
+        );
+
+        enrichedQuizzes = baseQuizzes.map((quiz) => detailMap.get(quiz.id) || quiz);
+      }
+
+      setQuizzes(enrichedQuizzes);
       setCategories(categoryResponse.data);
     } catch (requestError) {
       const message =
@@ -73,7 +91,7 @@ export default function QuizListPage() {
     if (quiz.categoryName) {
       return quiz.categoryName;
     }
-    return categories.find((category) => category.id === quiz.categoryId)?.name || `#${quiz.categoryId}`;
+    return categories.find((category) => category.id === quiz.categoryId)?.name || "Belirtilmedi";
   };
 
   const filteredQuizzes = useMemo(() => {
@@ -158,7 +176,7 @@ export default function QuizListPage() {
           value={categoryFilter}
           onChange={(event) => {
             const value = event.target.value;
-            setCategoryFilter(value === "all" ? "all" : Number(value));
+            setCategoryFilter(value === "all" ? "all" : value);
           }}
         >
           <option value="all">Tum kategoriler</option>
@@ -222,9 +240,9 @@ export default function QuizListPage() {
                   <tr key={quiz.id} className="text-sm text-stone-700 transition-colors hover:bg-stone-50/80 dark:text-stone-200 dark:hover:bg-stone-800/40">
                     <td className="px-4 py-3 font-medium">{quiz.title}</td>
                     <td className="px-4 py-3">{getCategoryName(quiz)}</td>
-                    <td className="px-4 py-3">{difficultyText[quiz.difficultyLevel] || "-"}</td>
-                    <td className="px-4 py-3">{quiz.questions?.length ?? "-"}</td>
-                    <td className="px-4 py-3">{quiz.timeLimitMinutes} dk</td>
+                    <td className="px-4 py-3">{difficultyText[quiz.difficultyLevel] || "Belirtilmedi"}</td>
+                    <td className="px-4 py-3">{quiz.questionCount ?? quiz.questions?.length ?? "-"}</td>
+                    <td className="px-4 py-3">{quiz.timeLimitMinutes > 0 ? `${quiz.timeLimitMinutes} dk` : "Belirtilmedi"}</td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
@@ -236,7 +254,7 @@ export default function QuizListPage() {
                         {quiz.isPublished ? "Yayinda" : "Taslak"}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{quiz.createdByUserName || quiz.createdByUserId}</td>
+                    <td className="px-4 py-3">{quiz.createdByUserName || user?.userName || "Belirtilmedi"}</td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => navigate(`/quizzes/${quiz.id}`)} className="gap-2">

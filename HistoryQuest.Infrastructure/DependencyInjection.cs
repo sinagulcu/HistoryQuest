@@ -4,6 +4,7 @@ using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Application.Categories.Interfaces;
 using HistoryQuest.Application.Challenges.Interfaces;
 using HistoryQuest.Application.Questions.Interfaces;
+using HistoryQuest.Application.Users.Interfaces;
 using HistoryQuest.Infrastructure.Persistence;
 using HistoryQuest.Infrastructure.Repositories;
 using HistoryQuest.Infrastructure.Security;
@@ -39,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<RefreshTokenCleanupService>();
         services.AddScoped<RefreshTokenCleanupHostedService>();
         services.AddHostedService<QuestionCleanupService>();
+
+        services.AddScoped<IUserReadRepository, UserReadRepository>();
 
         return services;
     }

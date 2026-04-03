@@ -128,7 +128,7 @@ export default function ChallengeForm({
                 <option value="">Soru seciniz</option>
                 {questions.map((question) => (
                   <option key={question.id} value={question.id}>
-                    #{question.id} - {question.text}
+                    {question.text.length > 90 ? `${question.text.slice(0, 90)}...` : question.text}
                   </option>
                 ))}
               </select>

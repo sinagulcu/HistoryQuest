@@ -34,7 +34,7 @@ export default function QuizDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
+  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [difficultyFilter, setDifficultyFilter] = useState<number | "all">("all");
   const [processingQuestionId, setProcessingQuestionId] = useState<string | null>(null);
   const [pendingRemoveQuestionId, setPendingRemoveQuestionId] = useState<string | null>(null);
@@ -84,8 +84,8 @@ export default function QuizDetailPage() {
 
   const quizQuestionIds = useMemo(() => new Set(quiz?.questions?.map((question) => question.id) || []), [quiz?.questions]);
 
-  const getCategoryNameById = (categoryId: number) => {
-    return categories.find((category) => category.id === categoryId)?.name || `#${categoryId}`;
+  const getCategoryNameById = (categoryId: string) => {
+    return categories.find((category) => category.id === categoryId)?.name || "-";
   };
 
   const filteredPoolQuestions = useMemo(() => {
@@ -145,7 +145,7 @@ export default function QuizDetailPage() {
   return (
     <div className="space-y-6">
       <PageSection
-        title={`Quiz Detay #${id}`}
+        title={quiz ? quiz.title : "Quiz Detay"}
         description="Quiz icindeki sorulari yonetin ve soru havuzundan yeni sorular ekleyin."
         actions={
           <Button variant="outline" onClick={() => navigate("/quizzes")} className="gap-2">
@@ -180,11 +180,11 @@ export default function QuizDetailPage() {
             </div>
             <div>
               <p className="text-xs uppercase text-stone-500">Sure Limiti</p>
-              <p className="font-semibold text-stone-900 dark:text-stone-100">{quiz.timeLimitMinutes} dakika</p>
+              <p className="font-semibold text-stone-900 dark:text-stone-100">{quiz.timeLimitMinutes > 0 ? `${quiz.timeLimitMinutes} dakika` : "-"}</p>
             </div>
             <div>
               <p className="text-xs uppercase text-stone-500">Olusturan</p>
-              <p className="font-semibold text-stone-900 dark:text-stone-100">{quiz.createdByUserName || quiz.createdByUserId}</p>
+              <p className="font-semibold text-stone-900 dark:text-stone-100">{quiz.createdByUserName || "-"}</p>
             </div>
             <div className="md:col-span-3">
               <p className="text-xs uppercase text-stone-500">Aciklama</p>
@@ -241,7 +241,7 @@ export default function QuizDetailPage() {
                   value={categoryFilter}
                   onChange={(event) => {
                     const value = event.target.value;
-                    setCategoryFilter(value === "all" ? "all" : Number(value));
+                    setCategoryFilter(value === "all" ? "all" : value);
                   }}
                 >
                   <option value="all">Tum kategoriler</option>

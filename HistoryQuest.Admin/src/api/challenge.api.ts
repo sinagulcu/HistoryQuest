@@ -13,12 +13,27 @@ const toStatus = (value: unknown): Challenge["status"] => {
 const normalizeChallenge = (raw: unknown): Challenge => {
   const item = unwrapApiData<Record<string, unknown>>(raw);
   const scheduledAtRaw = String(item.scheduledAtUtc ?? item.scheduledAt ?? new Date().toISOString());
+  const questionObject =
+    item.question && typeof item.question === "object"
+      ? unwrapApiData<Record<string, unknown>>(item.question)
+      : null;
+  const creatorObject =
+    item.createdByTeacher && typeof item.createdByTeacher === "object"
+      ? unwrapApiData<Record<string, unknown>>(item.createdByTeacher)
+      : null;
 
   return {
     id: String(item.id ?? ""),
     title: String(item.title ?? ""),
     questionId: String(item.questionId ?? ""),
-    questionText: typeof item.questionText === "string" ? item.questionText : undefined,
+    questionText:
+      typeof item.questionText === "string"
+        ? item.questionText
+        : typeof item.QuestionText === "string"
+          ? item.QuestionText
+          : questionObject && typeof questionObject.text === "string"
+            ? questionObject.text
+            : undefined,
     scheduledAtUtc: normalizeServerDateString(scheduledAtRaw) ?? new Date().toISOString(),
     answerWindowSeconds:
       typeof item.answerWindowSeconds === "number"
@@ -37,9 +52,15 @@ const normalizeChallenge = (raw: unknown): Challenge => {
     createdByTeacherName:
       typeof item.createdByTeacherName === "string"
         ? item.createdByTeacherName
-        : typeof item.createdByUserName === "string"
-          ? item.createdByUserName
-          : undefined,
+        : typeof item.createdByTeacherFullName === "string"
+          ? item.createdByTeacherFullName
+          : typeof item.createdByUserName === "string"
+            ? item.createdByUserName
+            : creatorObject && typeof creatorObject.fullName === "string"
+              ? creatorObject.fullName
+              : creatorObject && typeof creatorObject.userName === "string"
+                ? creatorObject.userName
+                : undefined,
     createdAt: normalizeServerDateString(typeof item.createdAt === "string" ? item.createdAt : undefined),
     updatedAt: normalizeServerDateString(typeof item.updatedAt === "string" ? item.updatedAt : undefined),
   };
@@ -50,7 +71,8 @@ const toChallengePayload = (data: ChallengeCreateDto | ChallengeUpdateDto) => ({
   questionId: data.questionId,
   scheduledAtUtc: localDateTimeInputToUtcIso(data.scheduledAt),
   answerWindowSeconds: Math.max(30, data.scoringDurationMinutes * 60),
-  visibilityWindowSeconds: Math.max(30, data.lateDurationMinutes * 60),
+  // Backend visibility window is total lifetime after publish, not just extra duration.
+  visibilityWindowSeconds: Math.max(30, (data.scoringDurationMinutes + data.lateDurationMinutes) * 60),
   maxScore: data.maxScore,
   showCorrectAnswerOnWrong: data.showCorrectAnswerOnWrong,
   showExplanationOnWrong: data.showExplanationOnWrong,

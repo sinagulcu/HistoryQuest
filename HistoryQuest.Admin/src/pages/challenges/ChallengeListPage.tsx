@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { challengeApi } from "@/api/challenge.api";
+import { questionApi } from "@/api/question.api";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
 import ErrorState from "@/components/shared/ErrorState";
@@ -38,13 +39,15 @@ export default function ChallengeListPage() {
   const [creatorFilter, setCreatorFilter] = useState<"all" | "mine" | "others">("all");
   const [pendingDelete, setPendingDelete] = useState<Challenge | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [questionTextById, setQuestionTextById] = useState<Map<string, string>>(new Map());
 
   const fetchChallenges = async () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await challengeApi.getAll();
-      setChallenges(data);
+      const [{ data: challengeData }, { data: questionData }] = await Promise.all([challengeApi.getAll(), questionApi.getAll()]);
+      setChallenges(challengeData);
+      setQuestionTextById(new Map(questionData.map((question) => [question.id, question.text])));
     } catch (requestError) {
       const message =
         axios.isAxiosError(requestError) && typeof requestError.response?.data?.message === "string"
@@ -178,7 +181,7 @@ export default function ChallengeListPage() {
                 return (
                   <tr key={challenge.id} className="text-sm text-stone-700 dark:text-stone-200">
                     <td className="px-4 py-3">{challenge.title}</td>
-                    <td className="max-w-sm px-4 py-3">{challenge.questionText || challenge.question?.text || `#${challenge.questionId}`}</td>
+                    <td className="max-w-sm px-4 py-3">{challenge.questionText || challenge.question?.text || questionTextById.get(challenge.questionId) || "Belirtilmedi"}</td>
                     <td className="whitespace-nowrap px-4 py-3">
                       {formatServerDateTime(challenge.scheduledAtUtc)}
                     </td>
@@ -191,7 +194,9 @@ export default function ChallengeListPage() {
                         {statusLabelMap[challengeStatus]}
                       </span>
                     </td>
-                    <td className="px-4 py-3">{challenge.createdByTeacherName || challenge.createdByTeacherId}</td>
+                    <td className="px-4 py-3">
+                      {challenge.createdByTeacherName || (challenge.createdByTeacherId === user?.id ? user.userName : "Belirtilmedi")}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">
                         {canManageChallenge(challenge) ? (

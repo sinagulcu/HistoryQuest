@@ -6,6 +6,7 @@ using HistoryQuest.Application.Challenges.UseCases;
 using HistoryQuest.Application.Questions.UseCases.Commands;
 using HistoryQuest.Application.Questions.UseCases.Quiz;
 using HistoryQuest.Application.Questions.UseCases.Quiz.Commands;
+using HistoryQuest.Application.Users.UseCases;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace HistoryQuest.Application;
@@ -55,6 +56,9 @@ public static class DependencyInjection
         services.AddScoped<StartQuizQueryHandler>();
         services.AddScoped<SubmitQuizCommandHandler>();
         services.AddScoped<GetAttemptResultQueryHandler>();
+
+        services.AddScoped<GetUsersQuery>();
+        services.AddScoped<GetUserCountQuery>();
 
         return services;
     }
