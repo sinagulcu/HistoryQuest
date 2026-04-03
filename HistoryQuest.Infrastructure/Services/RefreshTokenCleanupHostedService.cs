@@ -7,19 +7,16 @@ namespace HistoryQuest.Infrastructure.Services;
 
 public class RefreshTokenCleanupHostedService : BackgroundService
 {
-    private readonly IServiceScopeFactory _serviceScopeFactory;
-    private readonly IRefreshTokenCleanupService _cleanupService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<RefreshTokenCleanupHostedService> _logger;
     private readonly TimeSpan _interval = TimeSpan.FromHours(1);
 
     public RefreshTokenCleanupHostedService(
-        IRefreshTokenCleanupService cleanupService,
-        ILogger<RefreshTokenCleanupHostedService> logger,
-        IServiceScopeFactory serviceScopeFactory)
+        IServiceScopeFactory scopeFactory,
+        ILogger<RefreshTokenCleanupHostedService> logger)
     {
-        _cleanupService = cleanupService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
-        _serviceScopeFactory = serviceScopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,7 +25,7 @@ public class RefreshTokenCleanupHostedService : BackgroundService
         {
             try
             {
-                using var scope = _serviceScopeFactory.CreateScope();
+                using var scope = _scopeFactory.CreateScope();
                 var cleanupService = scope.ServiceProvider.GetRequiredService<IRefreshTokenCleanupService>();
                 await cleanupService.CleaupExpiredTokensAsync();
             }
@@ -36,6 +33,7 @@ public class RefreshTokenCleanupHostedService : BackgroundService
             {
                 _logger.LogError(ex, "Error occurred while cleaning up expired refresh tokens.");
             }
+
             await Task.Delay(_interval, stoppingToken);
         }
     }

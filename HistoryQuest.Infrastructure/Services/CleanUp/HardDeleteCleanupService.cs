@@ -9,18 +9,15 @@ namespace HistoryQuest.Infrastructure.Services.CleanUp;
 public sealed class HardDeleteCleanupService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IEnumerable<IHardDeletePolicy> _policies;
     private readonly IOptionsMonitor<HardDeleteOptions> _options;
     private readonly ILogger<HardDeleteCleanupService> _logger;
 
     public HardDeleteCleanupService(
         IServiceScopeFactory scopeFactory,
-        IEnumerable<IHardDeletePolicy> policies,
         IOptionsMonitor<HardDeleteOptions> options,
         ILogger<HardDeleteCleanupService> logger)
     {
         _scopeFactory = scopeFactory;
-        _policies = policies.OrderBy(x => x.Order).ToArray();
         _options = options;
         _logger = logger;
     }
@@ -39,11 +36,15 @@ public sealed class HardDeleteCleanupService : BackgroundService
                 {
                     using var scope = _scopeFactory.CreateScope();
                     var db = scope.ServiceProvider.GetRequiredService<HistoryQuestDbContext>();
+                    var policies = scope.ServiceProvider
+                        .GetServices<IHardDeletePolicy>()
+                        .OrderBy(x => x.Order)
+                        .ToList();
 
                     var disabled = new HashSet<string>(opt.DisabledPolicies, StringComparer.OrdinalIgnoreCase);
                     var totalDeleted = 0;
 
-                    foreach (var policy in _policies)
+                    foreach (var policy in policies)
                     {
                         if (disabled.Contains(policy.Key))
                             continue;
@@ -51,13 +52,12 @@ public sealed class HardDeleteCleanupService : BackgroundService
                         var retention = opt.RetentionDays.TryGetValue(policy.Key, out var days) ? days : 30;
                         var deleted = await policy.ExecuteAsync(db, DateTime.UtcNow, retention, stoppingToken);
                         totalDeleted += deleted;
-
-                        if (deleted > 0)
-                            _logger.LogInformation("HardDelete [{Policy}] deleted {Count} row(s).", policy.Key, deleted);
                     }
 
                     if (totalDeleted > 0)
-                        _logger.LogInformation("HardDelete cycle completed. Total deleted: {Total}.", totalDeleted);
+                    {
+                        _logger.LogInformation("HardDelete completed. Total deleted: {TotalDeleted}", totalDeleted);
+                    }
                 }
                 catch (Exception ex)
                 {

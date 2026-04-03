@@ -37,16 +37,15 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenCleanupService, RefreshTokenCleanupService>();
-        services.AddScoped<RefreshTokenCleanupHostedService>();
-
         services.Configure<HardDeleteOptions>(configuration.GetSection("HardDelete"));
 
-        services.AddSingleton<IHardDeletePolicy, QuestionHardDeletePolicy>();
-        services.AddSingleton<IHardDeletePolicy, QuizHardDeletePolicy>();
-        services.AddSingleton<IHardDeletePolicy, CategoryHardDeletePolicy>();
-        services.AddSingleton<IHardDeletePolicy, TimedChallengeHardDeletePolicy>();
+        services.AddScoped<IHardDeletePolicy, QuestionHardDeletePolicy>();
+        services.AddScoped<IHardDeletePolicy, QuizHardDeletePolicy>();
+        services.AddScoped<IHardDeletePolicy, CategoryHardDeletePolicy>();
+        services.AddScoped<IHardDeletePolicy, TimedChallengeHardDeletePolicy>();
 
         services.AddHostedService<HardDeleteCleanupService>();
+        services.AddHostedService<RefreshTokenCleanupHostedService>();
 
         services.AddScoped<IUserReadRepository, UserReadRepository>();
 

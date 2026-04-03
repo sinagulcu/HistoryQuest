@@ -50,9 +50,17 @@ public sealed class QuestionHardDeletePolicy : IHardDeletePolicy
         if (finalQuestionIds.Count == 0)
             return 0;
 
-        await db.Set<QuestionOption>()
-            .Where(o => finalQuestionIds.Contains(o.Id))
-            .ExecuteDeleteAsync(ct);
+        var optionIdsToDelete = await db.Questions
+    .Where(q => finalQuestionIds.Contains(q.Id))
+    .SelectMany(q => q.Options.Select(o => o.Id))
+    .ToListAsync(ct);
+
+        if (optionIdsToDelete.Count > 0)
+        {
+            await db.Set<QuestionOption>()
+                .Where(o => optionIdsToDelete.Contains(o.Id))
+                .ExecuteDeleteAsync(ct);
+        }
 
         var deleted = await db.Questions
             .Where(q => finalQuestionIds.Contains(q.Id))

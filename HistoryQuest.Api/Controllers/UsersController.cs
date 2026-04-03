@@ -29,10 +29,10 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetCount([FromServices] GetUserCountQuery query)
     {
         var count = await query.ExecuteAsync();
-        return Ok(count);
+        return Ok(new { totalUsers = count });
     }
 
-
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id.guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
