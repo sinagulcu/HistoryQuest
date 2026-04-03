@@ -28,9 +28,11 @@ public class CreateQuestionCommand
 
         var question = Question.Create(
             request.Text,
-            QuestionDifficulty.Medium,
-            QuestionType.SingleChoice,
-            teacherId
+            request.Difficulty,
+            request.Type,
+            teacherId,
+            request.CategoryId,   
+            request.Explanation
          );
 
         foreach (var option in request.Options)
