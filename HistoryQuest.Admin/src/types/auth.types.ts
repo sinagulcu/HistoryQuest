@@ -21,7 +21,9 @@ export interface LoginResponseDto {
 }
 
 export interface RegisterRequestDto {
-  username: string;
+  userName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
 }

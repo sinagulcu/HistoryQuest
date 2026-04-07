@@ -2,6 +2,7 @@ import axios from "axios";
 import { RefreshCw, Trash2, UserRoundCog, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { authApi } from "@/api/auth.api";
 import { userApi } from "@/api/user.api";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import EmptyState from "@/components/shared/EmptyState";
@@ -13,6 +14,15 @@ import { useAuth } from "@/hooks/useAuth";
 import type { UserRole } from "@/types/auth.types";
 import type { User } from "@/types/user.types";
 import { formatServerDateTime } from "@/utils/dateTime";
+
+type CreateUserFormState = {
+  userName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: UserRole;
+};
 
 function getApiErrorMessage(error: unknown, fallbackMessage: string) {
   if (axios.isAxiosError(error)) {
@@ -48,6 +58,16 @@ export default function UserListPage() {
   const [updatingRole, setUpdatingRole] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [pendingDeleteUser, setPendingDeleteUser] = useState<User | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState<CreateUserFormState>({
+    userName: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    role: "Student",
+  });
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -122,16 +142,74 @@ export default function UserListPage() {
     }
   };
 
+  const resetCreateForm = () => {
+    setCreateUserForm({
+      userName: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      role: "Student",
+    });
+  };
+
+  const handleCreateUser = async () => {
+    if (!createUserForm.userName.trim() || !createUserForm.email.trim() || !createUserForm.password.trim()) {
+      toast.error("Kullanıcı adı, e-posta ve şifre zorunludur.");
+      return;
+    }
+
+    setCreatingUser(true);
+    try {
+      await authApi.register({
+        userName: createUserForm.userName.trim(),
+        firstName: createUserForm.firstName.trim(),
+        lastName: createUserForm.lastName.trim(),
+        email: createUserForm.email.trim(),
+        password: createUserForm.password,
+      });
+
+      if (createUserForm.role !== "Student") {
+        const allUsersResponse = await userApi.getAll();
+        const createdUser = allUsersResponse.data.find(
+          (item) =>
+            item.email.toLowerCase() === createUserForm.email.trim().toLowerCase() ||
+            item.userName.toLowerCase() === createUserForm.userName.trim().toLowerCase(),
+        );
+
+        if (createdUser) {
+          await userApi.updateRole(createdUser.id, createUserForm.role);
+        } else {
+          toast.warning("Kullanıcı oluşturuldu ancak rol atama için kullanıcı kaydı bulunamadı.");
+        }
+      }
+
+      toast.success("Kullanıcı başarıyla oluşturuldu.");
+      setCreateDialogOpen(false);
+      resetCreateForm();
+      await fetchUsers();
+    } catch (requestError) {
+      toast.error(getApiErrorMessage(requestError, "Kullanıcı oluşturulurken hata oluştu."));
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageSection
         title="Kullanıcı Yönetimi"
         description="Kullanıcı rolleri, yetki düzenlemeleri ve silme işlemleri"
         actions={
-          <Button variant="outline" className="gap-2" onClick={fetchUsers}>
-            <RefreshCw className="h-4 w-4" />
-            Listeyi Yenile
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setCreateDialogOpen(true)}>
+              Kullanıcı Ekle
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={fetchUsers}>
+              <RefreshCw className="h-4 w-4" />
+              Listeyi Yenile
+            </Button>
+          </div>
         }
       />
 
@@ -236,6 +314,103 @@ export default function UserListPage() {
               </Button>
               <Button onClick={handleRoleUpdate} disabled={updatingRole}>
                 {updatingRole ? "Değiştiriliyor..." : "Değiştir"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {createDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-stone-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-100">Kullanıcı Ekle</h2>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setCreateDialogOpen(false);
+                  resetCreateForm();
+                }}
+                aria-label="Kapat"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">Kullanıcı Adı</label>
+                <input
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.userName}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, userName: event.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">E-posta</label>
+                <input
+                  type="email"
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.email}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, email: event.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">Ad</label>
+                <input
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.firstName}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, firstName: event.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">Soyad</label>
+                <input
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.lastName}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, lastName: event.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">Şifre</label>
+                <input
+                  type="password"
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.password}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, password: event.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm text-stone-700 dark:text-stone-200">Rol</label>
+                <select
+                  className="h-10 w-full rounded-md border border-stone-300 bg-white px-3 text-sm dark:border-stone-700 dark:bg-stone-900"
+                  value={createUserForm.role}
+                  onChange={(event) => setCreateUserForm((prev) => ({ ...prev, role: event.target.value as UserRole }))}
+                >
+                  <option value="Student">Student</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCreateDialogOpen(false);
+                  resetCreateForm();
+                }}
+              >
+                İptal
+              </Button>
+              <Button onClick={handleCreateUser} disabled={creatingUser}>
+                {creatingUser ? "Oluşturuluyor..." : "Kullanıcı Oluştur"}
               </Button>
             </div>
           </div>

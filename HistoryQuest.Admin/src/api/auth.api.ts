@@ -182,9 +182,19 @@ export const authApi = {
     };
   },
   register: (data: RegisterRequestDto) =>
-    api.post<LoginResponseDto>("/Auth/register", data, {
+    api.post<LoginResponseDto>(
+      "/Auth/register",
+      {
+        userName: data.userName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+      },
+      {
       skipAuth: true,
-    }),
+      },
+    ),
 };
 
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
