@@ -3,6 +3,9 @@
 using HistoryQuest.Application.Auth.UseCases;
 using HistoryQuest.Application.Categories.UseCases;
 using HistoryQuest.Application.Challenges.UseCases;
+using HistoryQuest.Application.Credits.Interfaces;
+using HistoryQuest.Application.Credits.Services;
+using HistoryQuest.Application.Credits.UseCases;
 using HistoryQuest.Application.Questions.UseCases.Commands;
 using HistoryQuest.Application.Questions.UseCases.Quiz;
 using HistoryQuest.Application.Questions.UseCases.Quiz.Commands;
@@ -61,6 +64,11 @@ public static class DependencyInjection
 
         services.AddScoped<GetUsersQuery>();
         services.AddScoped<GetUserCountQuery>();
+
+
+        services.AddScoped<ICreditLedgerService, CreditLedgerService>();
+        services.AddScoped<GetWalletSummaryQuery>();
+        services.AddScoped<GetCreditTransactionsQuery>();
 
         return services;
     }

@@ -25,6 +25,9 @@ public class HistoryQuestDbContext : DbContext
 
     public DbSet<TimedChallenge> TimedChallenges => Set<TimedChallenge>();
 
+    public DbSet<Wallet> Wallets => Set<Wallet>();
+    public DbSet<CreditTransaction> CreditTransaction => Set<CreditTransaction>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Question>(builder =>
@@ -67,6 +70,26 @@ public class HistoryQuestDbContext : DbContext
             .WithMany()
             .HasForeignKey(qq => qq.QuestionId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Wallet>(builder =>
+        {
+            builder.HasIndex(x => x.UserId).IsUnique();
+            builder.Property(x => x.Balance).IsRequired();
+
+            builder.Property(x => x.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken();
+        });
+
+        modelBuilder.Entity<CreditTransaction>(builder =>
+        {
+            builder.HasIndex(x => x.UserId);
+            builder.HasIndex(x => x.CreatedAt);
+
+            builder.HasIndex(x => x.IdempotencyKey)
+                .IsUnique()
+                .HasFilter("[IdempotencyKey] IS NOT NULL");
+        });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HistoryQuestDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
