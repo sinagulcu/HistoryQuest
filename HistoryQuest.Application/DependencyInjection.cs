@@ -69,6 +69,8 @@ public static class DependencyInjection
         services.AddScoped<ICreditLedgerService, CreditLedgerService>();
         services.AddScoped<GetWalletSummaryQuery>();
         services.AddScoped<GetCreditTransactionsQuery>();
+        services.AddScoped<SetQuizEconomyRuleCommand>();
+        services.AddScoped<ApplyQuizSettlementCommand>();
 
         return services;
     }

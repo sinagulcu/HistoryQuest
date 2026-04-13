@@ -4,8 +4,6 @@ using HistoryQuest.Application.Auth.Interfaces;
 using HistoryQuest.Application.Categories.Interfaces;
 using HistoryQuest.Application.Challenges.Interfaces;
 using HistoryQuest.Application.Credits.Interfaces;
-using HistoryQuest.Application.Credits.Services;
-using HistoryQuest.Application.Credits.UseCases;
 using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Application.Users.Interfaces;
 using HistoryQuest.Infrastructure.Persistence;
@@ -54,6 +52,8 @@ public static class DependencyInjection
 
         services.AddScoped<IWalletRepository, WalletRepository>();
         services.AddScoped<ICreditTransactionRepository, CreditTransactionRepository>();
+
+        services.AddScoped<IQuizEconomyRuleRepository, QuizEconomyRuleRepository>();
 
 
         return services;

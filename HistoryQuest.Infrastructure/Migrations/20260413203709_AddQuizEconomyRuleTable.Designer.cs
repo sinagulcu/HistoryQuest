@@ -4,6 +4,7 @@ using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HistoryQuest.Infrastructure.Migrations
 {
     [DbContext(typeof(HistoryQuestDbContext))]
-    partial class HistoryQuestDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260413203709_AddQuizEconomyRuleTable")]
+    partial class AddQuizEconomyRuleTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

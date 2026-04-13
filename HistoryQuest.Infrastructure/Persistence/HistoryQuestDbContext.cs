@@ -28,6 +28,8 @@ public class HistoryQuestDbContext : DbContext
     public DbSet<Wallet> Wallets => Set<Wallet>();
     public DbSet<CreditTransaction> CreditTransaction => Set<CreditTransaction>();
 
+    public DbSet<QuizEconomyRule> QuizEconomyRules => Set<QuizEconomyRule>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Question>(builder =>
@@ -89,6 +91,17 @@ public class HistoryQuestDbContext : DbContext
             builder.HasIndex(x => x.IdempotencyKey)
                 .IsUnique()
                 .HasFilter("[IdempotencyKey] IS NOT NULL");
+        });
+
+        modelBuilder.Entity<QuizEconomyRule>(builder =>
+        {
+            builder.ToTable("QuizEconomyRules");
+            builder.HasKey(x => x.Id);
+            builder.HasIndex(x => x.QuizId).IsUnique();
+            builder.Property(x => x.EntryCost).IsRequired();
+            builder.Property(x => x.RewardPool).IsRequired();
+            builder.Property(x => x.WrongPenaltyPerQuestion).IsRequired();
+            builder.Property(x => x.IsActive).IsRequired();
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HistoryQuestDbContext).Assembly);
