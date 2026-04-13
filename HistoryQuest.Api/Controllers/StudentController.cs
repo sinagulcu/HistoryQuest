@@ -103,13 +103,19 @@ public class StudentController : ControllerBase
 
     private Guid GetCurrentUserIdOrThrow()
     {
-        var raw = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
-        ?? User.FindFirstValue("sub")
-        ?? User.FindFirstValue("nameid");
+        var candidates = new[]
+           {
+        User.FindFirstValue(ClaimTypes.NameIdentifier),
+        User.FindFirstValue("sub"),
+        User.FindFirstValue("nameid")
+    };
 
-        if (string.IsNullOrWhiteSpace(raw))
-            throw new UnauthorizedAccessException("User id claim not found.");
+        foreach (var raw in candidates)
+        {
+            if (!string.IsNullOrWhiteSpace(raw) && Guid.TryParse(raw, out var id) && id != Guid.Empty)
+                return id;
+        }
 
-        return Guid.Parse(raw);
+        throw new UnauthorizedAccessException("Valid user id claim not found.");
     }
 }

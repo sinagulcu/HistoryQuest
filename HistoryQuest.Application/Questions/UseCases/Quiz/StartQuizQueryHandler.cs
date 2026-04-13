@@ -25,6 +25,9 @@ public class StartQuizQueryHandler
 
     public async Task<StartQuizResponse> Handle(StartQuizQuery query, CancellationToken cancellationToken = default)
     {
+        if (query.StudentId == Guid.Empty)
+            throw new BusinessRuleException("StudentId is required.");
+
         var quiz = await _quizRepository.GetByIdAsync(query.QuizId);
 
         if (quiz is null)

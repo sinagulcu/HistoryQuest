@@ -1,6 +1,7 @@
 ﻿
 using HistoryQuest.Application.Credits.Interfaces;
 using HistoryQuest.Domain.Entities;
+using HistoryQuest.Domain.Exceptions;
 using HistoryQuest.Domain.Models;
 
 namespace HistoryQuest.Application.Credits.Services;
@@ -27,7 +28,10 @@ public class CreditLedgerService : ICreditLedgerService
         string? metadataJson = null,
         CancellationToken cancellationToken = default)
     {
-        if(!string.IsNullOrWhiteSpace(idempotencyKey))
+        if (userId == Guid.Empty)
+            throw new BusinessRuleException("UserId is required.");
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
         {
             var exists = await _transactionRepository.ExistsByIdempotencyKeyAsync(idempotencyKey, cancellationToken);
             if (exists)
