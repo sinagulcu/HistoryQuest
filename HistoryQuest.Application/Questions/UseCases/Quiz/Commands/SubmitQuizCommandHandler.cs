@@ -26,6 +26,9 @@ public class SubmitQuizCommandHandler
 
     public async Task<SubmitQuizResponse> Handle(SubmitQuizCommand command)
     {
+        if (command.StudentId == Guid.Empty)
+            throw new BusinessRuleException("StudentId is required.");
+
         var quiz = await _quizRepository.GetByIdAsync(command.QuizId);
 
         if (quiz is null)

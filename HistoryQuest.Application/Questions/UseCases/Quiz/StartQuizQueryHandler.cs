@@ -1,5 +1,6 @@
 ﻿
 
+using HistoryQuest.Application.Credits.Interfaces;
 using HistoryQuest.Application.Questions.DTOs.Quiz;
 using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Exceptions;
@@ -12,13 +13,17 @@ namespace HistoryQuest.Application.Questions.UseCases.Quiz;
 public class StartQuizQueryHandler
 {
     private readonly IQuizRepository _quizRepository;
+    private readonly IQuizEconomyRuleRepository _quizEconomyRuleRepository;
+    private readonly ICreditLedgerService _creditLedgerService;
 
-    public StartQuizQueryHandler(IQuizRepository quizRepository)
+    public StartQuizQueryHandler(IQuizRepository quizRepository, IQuizEconomyRuleRepository quizEconomyRuleRepository, ICreditLedgerService creditLedgerService)
     {
         _quizRepository = quizRepository;
+        _quizEconomyRuleRepository = quizEconomyRuleRepository;
+        _creditLedgerService = creditLedgerService;
     }
 
-    public async Task<StartQuizResponse> Handle(StartQuizQuery query)
+    public async Task<StartQuizResponse> Handle(StartQuizQuery query, CancellationToken cancellationToken = default)
     {
         var quiz = await _quizRepository.GetByIdAsync(query.QuizId);
 
@@ -27,6 +32,23 @@ public class StartQuizQueryHandler
 
         if (quiz.Status != QuizStatus.Published)
             throw new BusinessRuleException("Quiz not published.");
+
+        var rule = await _quizEconomyRuleRepository.GetByQuizIdAsync(query.QuizId, cancellationToken);
+        if (rule is not null && rule.IsActive && rule.EntryCost > 0)
+        {
+            var key = $"quiz-entry:{query.QuizId}:{query.StudentId}:{DateTime.UtcNow:yyyyMMdd}";
+
+            await _creditLedgerService.ApplyAsync(
+        userId: query.StudentId,
+        amount: -rule.EntryCost,
+        type: CreditTransactionType.QuizEntry,
+        reason: "Quiz giriş ücreti",
+        referenceType: "Quiz",
+        referenceId: query.QuizId,
+        idempotencyKey: key,
+        cancellationToken: cancellationToken);
+
+        }
 
         return new StartQuizResponse
         {

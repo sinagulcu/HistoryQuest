@@ -31,8 +31,15 @@ public class StudentController : ControllerBase
     [HttpGet("{quizId}/start")]
     public async Task<IActionResult> StartQuiz(Guid quizId)
     {
-        var studentId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
+        Guid studentId;
+        try
+        {
+            studentId = GetCurrentUserIdOrThrow();
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(ex.Message);
+        }
         try
         {
             var result = await _startQuizHandler.Handle(new StartQuizQuery(quizId, studentId));
@@ -45,7 +52,16 @@ public class StudentController : ControllerBase
     [HttpPost("{quizId}/submit")]
     public async Task<IActionResult> SubmitQuiz(Guid quizId, SubmitQuizRequest request)
     {
-        var studentId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        Guid studentId;
+        try
+        {
+            studentId = GetCurrentUserIdOrThrow();
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+
 
         var command = new SubmitQuizCommand(quizId, studentId,
             request.Answers.Select(a => new SubmitAnswerDto
@@ -66,7 +82,15 @@ public class StudentController : ControllerBase
     [HttpGet("result/{attemptId}")]
     public async Task<IActionResult> GetResult(Guid attemptId)
     {
-        var studentId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        Guid studentId;
+        try
+        {
+            studentId = GetCurrentUserIdOrThrow();
+        }
+        catch (Exception ex)
+        {
+            return Unauthorized(ex.Message);
+        }
 
         try
         {
@@ -75,5 +99,17 @@ public class StudentController : ControllerBase
         }
         catch (NotFoundException ex) { return NotFound(ex.Message); }
         catch (UnauthorizedException ex) { return Forbid(); }
+    }
+
+    private Guid GetCurrentUserIdOrThrow()
+    {
+        var raw = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier)
+        ?? User.FindFirstValue("sub")
+        ?? User.FindFirstValue("nameid");
+
+        if (string.IsNullOrWhiteSpace(raw))
+            throw new UnauthorizedAccessException("User id claim not found.");
+
+        return Guid.Parse(raw);
     }
 }

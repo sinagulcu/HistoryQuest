@@ -1,6 +1,7 @@
 ﻿
 
 using HistoryQuest.Application.Credits.Interfaces;
+using HistoryQuest.Domain.Exceptions;
 using HistoryQuest.Domain.Models;
 
 namespace HistoryQuest.Application.Credits.UseCases;
@@ -25,15 +26,21 @@ public sealed class ApplyQuizSettlementCommand
         int wrongCount,
         CancellationToken ct = default)
     {
-        var rule = await _ruleRepository.GetByQuizIdAsync(quizId,ct);
+        if (totalQuestionCount <= 0)
+            throw new BusinessRuleException("Quiz question count must be greater than zero.");
 
-        if (rule is null || !rule.IsActive)
-            return;
+        var rule = await _ruleRepository.GetByQuizIdAsync(quizId, ct);
 
-        var settlementKey = $"quiz-settlement:{attemptId}";
+        if (rule is null)
+            throw new NotFoundException($"Quiz economy rule not found for quiz: {quizId}");
 
-        var perQuestionReward = totalQuestionCount > 0 ? rule.RewardPool / totalQuestionCount : 0;
+        if (!rule.IsActive)
+            throw new BusinessRuleException("Quiz economy rule is not active");
 
+
+        var settlementKey = $"quiz-settlement:{studentId}:{attemptId}";
+
+        var perQuestionReward = rule.RewardPool / totalQuestionCount;
         var reward = perQuestionReward * Math.Max(correctCount, 0);
         var penalty = (long)rule.WrongPenaltyPerQuestion * Math.Max(wrongCount, 0);
 
@@ -49,10 +56,11 @@ public sealed class ApplyQuizSettlementCommand
             amount: net,
             type: net > 0 ? CreditTransactionType.QuizReward : CreditTransactionType.WrongPenalty,
             reason: "Quiz sonucu kredi settlement",
-            referenceType: "Quiz Attempt",
+            referenceType: "QuizAttempt",
             referenceId: attemptId,
             idempotencyKey: settlementKey,
-            metadataJson: $"{{\"quizId\":\"{quizId}\",\"correct\":{correctCount},\"wrong\":{wrongCount}}}",
-            cancellationToken: ct);
+            metadataJson: $"{{\"quizId\":\"{quizId}\",\"correct\":{correctCount},\"wrong\":{wrongCount},\"total\":{totalQuestionCount}}}",
+            cancellationToken: ct
+            );
     }
 }
