@@ -21,6 +21,16 @@ public class QuizAttemptRepository : IQuizAttemptRepository
         await _context.QuizAttempts.AddAsync(attempt);
     }
 
+    public async Task<QuizAttempt?> GetActiveAttemptAsync(Guid quizId, Guid studentId, CancellationToken ct = default)
+    {
+        return await _context.QuizAttempts
+            .Include(a => a.Answers)
+            .FirstOrDefaultAsync(a =>
+                a.QuizId == quizId &&
+                a.StudentId == studentId &&
+                !a.IsCompleted, ct);
+    }
+
     public async Task<QuizAttempt?> GetByIdAsync(Guid attemptId)
     {
         return await _context.QuizAttempts
@@ -35,6 +45,11 @@ public class QuizAttemptRepository : IQuizAttemptRepository
             .Include(a => a.Quiz)
             .Where(a => a.StudentId == studentId)
             .ToListAsync();
+    }
+
+    public void Update(QuizAttempt attempt)
+    {
+        _context.QuizAttempts.Update(attempt);
     }
 
     public async Task SaveChangesAsync()

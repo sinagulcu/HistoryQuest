@@ -29,21 +29,20 @@ public class SubmitQuizCommandHandler
         if (command.StudentId == Guid.Empty)
             throw new BusinessRuleException("StudentId is required.");
 
-        var quiz = await _quizRepository.GetByIdAsync(command.QuizId);
-
-        if (quiz is null)
-            throw new NotFoundException("Quiz not found.");
+        var quiz = await _quizRepository.GetByIdAsync(command.QuizId) ?? throw new NotFoundException("Quiz not found.");
 
         if (quiz.Status != QuizStatus.Published)
             throw new BusinessRuleException("Quiz not published");
 
+        var attempt = await _attemptRepository.GetActiveAttemptAsync(command.QuizId, command.StudentId) 
+            ?? throw new BusinessRuleException("Active quiz not found. Quiz must be started");
+
+        if (attempt.IsCompleted)
+            throw new BusinessRuleException("This quiz try completed allready.");
+
         var optionMap = quiz.QuizQuestions
             .SelectMany(x => x.Question.Options)
             .ToDictionary(o => o.Id, o => o.IsCorrect);
-
-        var totalQuestionCount = quiz.QuizQuestions.Count;
-
-        var attempt = QuizAttempt.Start(command.QuizId, command.StudentId, totalQuestionCount);
 
         var answers = command.Answers.Select(a => AttemptAnswer.Create(
             attempt.Id,
@@ -53,21 +52,27 @@ public class SubmitQuizCommandHandler
         )).ToList();
 
         attempt.Complete(answers);
-
-        await _attemptRepository.AddAsync(attempt);
         await _attemptRepository.SaveChangesAsync();
 
+        var totalQuestionCount = attempt.TotalQuestions;
         var correctCount = answers.Count(x => x.IsCorrect);
         var wrongCount = Math.Max(totalQuestionCount - correctCount, 0);
 
-        await _applyQuizSettlementCommand.ExecuteAsync(
-            quizId: command.QuizId,
-            studentId: command.StudentId,
-            attemptId: attempt.Id,
-            totalQuestionCount: totalQuestionCount,
-            correctCount: correctCount,
-            wrongCount: wrongCount
-            );
+        if (!attempt.IsSettled)
+        {
+            await _applyQuizSettlementCommand.ExecuteAsync(
+                quizId: command.QuizId,
+                studentId: command.StudentId,
+                attemptId: attempt.Id,
+                totalQuestionCount: totalQuestionCount,
+                correctCount: correctCount,
+                wrongCount: wrongCount
+                );
+
+            attempt.MarkSettled();
+            _attemptRepository.Update(attempt);
+            await _attemptRepository.SaveChangesAsync();
+        }
 
         return new SubmitQuizResponse
         {
@@ -82,6 +87,6 @@ public class SubmitQuizCommandHandler
 public class SubmitQuizResponse
 {
     public Guid AttemptId { get; set; }
-    public int Score { get; set; }  
+    public int Score { get; set; }
     public int TotalQuestions { get; set; }
 }

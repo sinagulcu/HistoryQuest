@@ -50,7 +50,7 @@ public class StudentController : ControllerBase
     }
 
     [HttpPost("{quizId}/submit")]
-    public async Task<IActionResult> SubmitQuiz(Guid quizId, SubmitQuizRequest request)
+    public async Task<IActionResult> SubmitQuiz(Guid quizId, SubmitQuizRequest request, CancellationToken cancellationToken = default)
     {
         Guid studentId;
         try

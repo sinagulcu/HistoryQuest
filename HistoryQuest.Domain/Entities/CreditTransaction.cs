@@ -21,21 +21,22 @@ public class CreditTransaction : BaseEntity
 
     protected CreditTransaction() { }
 
-    private CreditTransaction(Guid userId, 
-        long amount, 
-        long balanceAfter, 
-        CreditTransactionType type, 
-        string reason, 
-        string? referenceType, 
+    private CreditTransaction(
+        Guid userId,
+        long amount,
+        long balanceAfter,
+        CreditTransactionType type,
+        string reason,
+        string? referenceType,
         Guid? referenceId,
         string? idempotencyKey,
         string? metadataJson)
     {
-        if (UserId == Guid.Empty)
+        if (userId == Guid.Empty)
             throw new BusinessRuleException("UserId is required.");
-        if(amount == 0)
+        if (amount == 0)
             throw new BusinessRuleException("Amount cannot be zero.");
-        if(string.IsNullOrWhiteSpace(reason))
+        if (string.IsNullOrWhiteSpace(reason))
             throw new BusinessRuleException("Reason is required.");
 
         UserId = userId;
@@ -50,7 +51,7 @@ public class CreditTransaction : BaseEntity
     }
 
     public static CreditTransaction Create(
-        Guid userId,
+       Guid userId,
         long amount,
         long balanceAfter,
         CreditTransactionType type,

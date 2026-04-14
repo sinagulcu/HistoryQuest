@@ -15,6 +15,12 @@ public class QuizAttempt
     public int TotalQuestions { get; private set; }
     public AttemptStatus Status { get; private set; }
 
+    public bool IsEntryFeeCharged { get; private set; }
+    public DateTime? EntryFeeChargedAt { get; private set; }
+    public bool IsSettled { get; private set; }
+    public DateTime? SettledAt { get; private set; }
+    public bool IsCompleted { get; private set; }
+
     public Quiz? Quiz { get; private set; }
 
     public IReadOnlyCollection<AttemptAnswer> Answers => _answers.AsReadOnly();
@@ -33,10 +39,27 @@ public class QuizAttempt
         };
     }
 
+    public void MarkEntryFeeCharged()
+    {
+        if (IsEntryFeeCharged) return;
+
+        IsEntryFeeCharged = true;
+        EntryFeeChargedAt = DateTime.UtcNow;
+    }
+
+    public void MarkSettled()
+    {
+        if (IsSettled) return;
+
+        IsSettled = true;
+        SettledAt = DateTime.UtcNow;
+    }
+
     public void Complete(List<AttemptAnswer> answers)
     {
         _answers.AddRange(answers);
         Score = answers.Count(a => a.IsCorrect);
+        IsCompleted = true;
         CompletedAt = DateTime.UtcNow;
         Status = AttemptStatus.Completed;
     }
