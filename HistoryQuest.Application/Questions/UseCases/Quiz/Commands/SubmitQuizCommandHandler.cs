@@ -70,7 +70,6 @@ public class SubmitQuizCommandHandler
                 );
 
             attempt.MarkSettled();
-            _attemptRepository.Update(attempt);
             await _attemptRepository.SaveChangesAsync();
         }
 

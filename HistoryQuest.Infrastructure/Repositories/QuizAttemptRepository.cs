@@ -24,19 +24,19 @@ public class QuizAttemptRepository : IQuizAttemptRepository
     public async Task<QuizAttempt?> GetActiveAttemptAsync(Guid quizId, Guid studentId, CancellationToken ct = default)
     {
         return await _context.QuizAttempts
+            .AsTracking()
             .Include(a => a.Answers)
-            .FirstOrDefaultAsync(a =>
-                a.QuizId == quizId &&
-                a.StudentId == studentId &&
-                !a.IsCompleted, ct);
+            .Where(a => a.QuizId == quizId && a.StudentId == studentId && !a.IsCompleted)
+            .OrderByDescending(a => a.StartedAt)
+            .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<QuizAttempt?> GetByIdAsync(Guid attemptId)
+    public async Task<QuizAttempt?> GetByIdAsync(Guid attemptId, CancellationToken ct = default)
     {
         return await _context.QuizAttempts
+            .AsTracking()
             .Include(a => a.Answers)
-            .Include(a => a.Quiz)
-            .FirstOrDefaultAsync(a => a.Id == attemptId);
+            .FirstOrDefaultAsync(a => a.Id == attemptId, ct);
     }
 
     public async Task<List<QuizAttempt>> GetByStudentIdAsync(Guid studentId)
@@ -45,11 +45,6 @@ public class QuizAttemptRepository : IQuizAttemptRepository
             .Include(a => a.Quiz)
             .Where(a => a.StudentId == studentId)
             .ToListAsync();
-    }
-
-    public void Update(QuizAttempt attempt)
-    {
-        _context.QuizAttempts.Update(attempt);
     }
 
     public async Task SaveChangesAsync()
