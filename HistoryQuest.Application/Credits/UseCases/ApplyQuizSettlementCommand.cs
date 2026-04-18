@@ -11,12 +11,15 @@ public sealed class ApplyQuizSettlementCommand
     private readonly IQuizEconomyRuleRepository _ruleRepository;
     private readonly ICreditLedgerService _creditLedgerService;
     private readonly ICreditTransactionRepository _creditTransactionRepository;
+    private readonly IWalletRepository _walletRepository;
 
-    public ApplyQuizSettlementCommand(IQuizEconomyRuleRepository ruleRepository, ICreditLedgerService creditLedgerService, ICreditTransactionRepository creditTransactionRepository)
+    public ApplyQuizSettlementCommand(IQuizEconomyRuleRepository ruleRepository, ICreditLedgerService creditLedgerService,
+        ICreditTransactionRepository creditTransactionRepository, IWalletRepository walletRepository)
     {
         _ruleRepository = ruleRepository;
         _creditLedgerService = creditLedgerService;
         _creditTransactionRepository = creditTransactionRepository;
+        _walletRepository = walletRepository;
     }
 
     public async Task<int> ExecuteAsync(
@@ -39,47 +42,48 @@ public sealed class ApplyQuizSettlementCommand
         if (!rule.IsActive)
             throw new BusinessRuleException("Quiz economy rule is not active");
 
+        var rewardedCount = await _creditTransactionRepository.GetQuizRewardCountForUserAsync(studentId, quizId, ct);
+        var canReceiveReward = rewardedCount < rule.MaxRewardedAttemptsPerUser;
+
+        var perQuestionReward = rule.RewardPool / totalQuestionCount;
+        var reward = canReceiveReward ? perQuestionReward * Math.Max(correctCount, 0) : 0L;
+        var penalty = (long)rule.WrongPenaltyPerQuestion * Math.Max(wrongCount, 0);
+
+        var rawNet = reward - penalty;
+        var safeNet = rawNet;
+
+        if (rawNet < 0)
+        {
+            var wallet = await _walletRepository.GetByUserIdAsync(studentId, ct);
+            var currentBalance = wallet?.Balance ?? 0L;
+            var maxDebit = Math.Min(Math.Abs(rawNet), currentBalance);
+            safeNet = -maxDebit;
+        }
+
+        var net = (int)Math.Clamp(safeNet, int.MinValue, int.MaxValue);
+
+        if (net == 0)
+            return 0;
 
         var settlementKey = $"quiz-settlement:{studentId}:{attemptId}";
 
-        var perQuestionReward = rule.RewardPool / totalQuestionCount;
-        var reward = perQuestionReward * Math.Max(correctCount, 0);
-        var penalty = (long)rule.WrongPenaltyPerQuestion * Math.Max(wrongCount, 0);
-
-        var alreadyRewardedForThisQuiz = await _creditTransactionRepository
-            .HasUserReceivedQuizRewardAsync(studentId, quizId, ct);
-
-        if (alreadyRewardedForThisQuiz)
-        {
-            reward = 0;
-        }
-
-        var rewardCount = await _creditTransactionRepository.GetQuizRewardCountForUserAsync(studentId, quizId, ct);
-        var canReceiveReward = rewardCount < rule.MaxRewardedAttemptsPerUser;
-
-        if (!canReceiveReward)
-            reward = 0;
-
-        var netLong = reward - penalty;
-
-        var net = (int)Math.Clamp(netLong, int.MinValue, int.MaxValue);
-
-        if (net != 0)
+        try
         {
             await _creditLedgerService.ApplyAsync(
-                    userId: studentId,
-                    amount: net,
-                    type: net > 0 ? CreditTransactionType.QuizReward : CreditTransactionType.WrongPenalty,
-                    reason: canReceiveReward
-                        ? "Quiz sonucu kredi settlement"
-                        : "Tekrar deneme: ödül hakkı dolu, ceza uygulanır",
-                    referenceType: "QuizAttempt",
-                    referenceId: attemptId,
-                    idempotencyKey: settlementKey,
-                    metadataJson: $"{{\"quizId\":\"{quizId}\",\"correct\":{correctCount},\"wrong\":" +
-                    $"{wrongCount},\"repeat\":{alreadyRewardedForThisQuiz.ToString().ToLower()}}}",
-                    cancellationToken: ct
-                );
+                userId: studentId,
+                amount: net,
+                type: net > 0 ? CreditTransactionType.QuizReward : CreditTransactionType.WrongPenalty,
+                reason: canReceiveReward ? "Quiz sonucu kredi düşümü" : "Tekrar deneme: ödül hakkı doldu, cezalar uygulanır",
+                referenceType: "QuizAttempt",
+                referenceId: attemptId,
+                idempotencyKey: settlementKey,
+                metadataJson: $"{{\"quizId\":\"{quizId}\",\"correct\":{correctCount},\"wrong\":{wrongCount},\"total\":{totalQuestionCount},\"rewardAllowed\":{canReceiveReward.ToString().ToLower()}}}",
+                cancellationToken: ct
+            );
+        }
+        catch (BusinessRuleException ex) when (ex.Message.Contains("Insufficient balance.", StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
         }
 
         return net;
