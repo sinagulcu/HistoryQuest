@@ -102,6 +102,7 @@ public class HistoryQuestDbContext : DbContext
             builder.Property(x => x.RewardPool).IsRequired();
             builder.Property(x => x.WrongPenaltyPerQuestion).IsRequired();
             builder.Property(x => x.IsActive).IsRequired();
+            builder.Property(x => x.MaxRewardedAttemptsPerUser).IsRequired();
         });
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(HistoryQuestDbContext).Assembly);

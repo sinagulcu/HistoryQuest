@@ -8,4 +8,5 @@ public class SetQuizEconomyRuleRequest
     public long RewardPool { get; set; }
     public int WrongPenaltyPerQuestion { get; set; }
     public bool IsActive { get; set; } = true;
+    public int MaxRewaededAttemptsPerUser { get; set; } = 1;
 }

@@ -27,16 +27,17 @@ public sealed class SetQuizEconomyRuleCommand
             throw new UnauthorizedException("You are not modify this quiz");
 
         var existing = await _ruleRepository.GetByQuizIdAsync(quizId, ct);
-        if(existing is null)
+        if (existing is null)
         {
             var rule = QuizEconomyRule.Create(
                 quizId,
                 request.EntryCost,
                 request.RewardPool,
-                request.WrongPenaltyPerQuestion);
+                request.WrongPenaltyPerQuestion,
+                request.MaxRewaededAttemptsPerUser);
 
             if (!request.IsActive)
-                rule.Update(request.EntryCost, request.RewardPool, request.WrongPenaltyPerQuestion, false);
+                rule.Update(request.EntryCost, request.RewardPool, request.WrongPenaltyPerQuestion, false, request.MaxRewaededAttemptsPerUser);
 
             await _ruleRepository.AddAsync(rule, ct);
             await _ruleRepository.SaveChangesAsync(ct);
@@ -44,7 +45,7 @@ public sealed class SetQuizEconomyRuleCommand
             return;
         }
 
-        existing.Update(request.EntryCost, request.RewardPool, request.WrongPenaltyPerQuestion, request.IsActive);
+        existing.Update(request.EntryCost, request.RewardPool, request.WrongPenaltyPerQuestion, request.IsActive, request.MaxRewaededAttemptsPerUser);
         await _ruleRepository.SaveChangesAsync(ct);
     }
 }

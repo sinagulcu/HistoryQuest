@@ -11,6 +11,8 @@ public interface IQuizAttemptRepository
     Task<List<QuizAttempt>> GetByStudentIdAsync(Guid studentId);
     Task<QuizAttempt?> GetActiveAttemptAsync(Guid quizId, Guid studentId, CancellationToken ct = default);
 
+    Task<int> UpdateScoreAsync(Guid attemptId, int score, CancellationToken ct = default);
+
     Task<int> CompleteAttemptAsync(
         Guid attemptId,
         int score,

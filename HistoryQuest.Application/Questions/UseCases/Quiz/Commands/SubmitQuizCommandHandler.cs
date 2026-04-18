@@ -53,24 +53,26 @@ public class SubmitQuizCommandHandler
         )).ToList();
 
         var score = answers.Count(a => a.IsCorrect);
-        var completeAffected = await _attemptRepository.CompleteAttemptAsync(attempt.Id, score, answers);
-
-        if (completeAffected == 0)
-            throw new BusinessRuleException("Quiz attempt already completed or not found.");
 
         var totalQuestionCount = attempt.TotalQuestions;
         var correctCount = score;
         var wrongCount = Math.Max(totalQuestionCount - correctCount, 0);
 
+        var completeAffected = await _attemptRepository.CompleteAttemptAsync(attempt.Id, score, answers);
 
-        await _applyQuizSettlementCommand.ExecuteAsync(
-                    quizId: command.QuizId,
-                    studentId: command.StudentId,
-                    attemptId: attempt.Id,
-                    totalQuestionCount: totalQuestionCount,
-                    correctCount: correctCount,
-                    wrongCount: wrongCount
-                );
+        if (completeAffected == 0)
+            throw new BusinessRuleException("Quiz attempt already completed or not found.");
+
+        var creditDelta = await _applyQuizSettlementCommand.ExecuteAsync(
+                                    quizId: command.QuizId,
+                                    studentId: command.StudentId,
+                                    attemptId: attempt.Id,
+                                    totalQuestionCount: totalQuestionCount,
+                                    correctCount: correctCount,
+                                    wrongCount: wrongCount
+                                );
+
+        await _attemptRepository.UpdateScoreAsync(attempt.Id, creditDelta);
 
         await _attemptRepository.MarkSettledAsync(attempt.Id);
 
@@ -78,7 +80,8 @@ public class SubmitQuizCommandHandler
         return new SubmitQuizResponse
         {
             AttemptId = attempt.Id,
-            Score = attempt.Score,
+            Score = creditDelta,
+            CreditDelta = creditDelta,
             TotalQuestions = attempt.TotalQuestions,
         };
 
@@ -89,5 +92,6 @@ public class SubmitQuizResponse
 {
     public Guid AttemptId { get; set; }
     public int Score { get; set; }
+    public int CreditDelta { get; set; } 
     public int TotalQuestions { get; set; }
 }

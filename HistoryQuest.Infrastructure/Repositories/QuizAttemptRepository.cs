@@ -50,6 +50,13 @@ public class QuizAttemptRepository : IQuizAttemptRepository
             .ToListAsync();
     }
 
+    public async Task<int> UpdateScoreAsync(Guid attemptId, int score, CancellationToken ct = default)
+    {
+        return await _context.QuizAttempts
+            .Where(a => a.Id == attemptId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.Score, score), ct);
+    }
+
     public async Task<int> CompleteAttemptAsync(Guid attemptId, int score, IEnumerable<AttemptAnswer> answers, CancellationToken ct = default)
     {
         await _context.AttemptAnswers.AddRangeAsync(answers, ct);
