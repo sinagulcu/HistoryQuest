@@ -1,5 +1,6 @@
 ﻿using HistoryQuest.Application.Questions.Interfaces;
 using HistoryQuest.Domain.Entities;
+using HistoryQuest.Domain.Models;
 using HistoryQuest.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,24 +48,26 @@ public class QuizAttemptRepository : IQuizAttemptRepository
             .Where(a => a.StudentId == studentId)
             .ToListAsync();
     }
-
-    public async Task<int> CompleteAttemptAsync(Guid attemptId, int score, IEnumerable<AttemptAnswer> answers, CancellationToken ct = default)
+    public async Task<int> AddAnswersAsync(Guid attemptId, IEnumerable<AttemptAnswer> answers, CancellationToken ct = default)
     {
-        var affected = await _context.QuizAttempts
+        var list = answers.ToList();
+
+        if (list.Count == 0) return 0;
+
+        await _context.AttemptAnswers.AddRangeAsync(list, ct);
+        await _context.SaveChangesAsync();
+        return list.Count;
+    }
+
+    public async Task<int> CompleteAttemptAsync(Guid attemptId, int score, CancellationToken ct = default)
+    {
+        return await _context.QuizAttempts
             .Where(a => a.Id == attemptId && !a.IsCompleted)
             .ExecuteUpdateAsync(setters => setters
-            .SetProperty(a => a.Score, score)
-            .SetProperty(a => a.Status, Domain.Models.AttemptStatus.Completed)
-            .SetProperty(a => a.IsCompleted, true)
-            .SetProperty(a => a.CompletedAt, DateTime.UtcNow), ct);
-
-        if (affected == 0)
-            return 0;
-
-        await _context.AttemptAnswers.AddRangeAsync(answers, ct);
-        await _context.SaveChangesAsync(ct);
-
-        return affected;
+                .SetProperty(a => a.Score, score)
+                .SetProperty(a => a.Status, AttemptStatus.Completed)
+                .SetProperty(a => a.IsCompleted, true)
+                .SetProperty(a => a.CompletedAt, DateTime.UtcNow), ct);
     }
 
     public async Task<int> UpdateScoreAsync(Guid attemptId, int score, CancellationToken ct = default)
@@ -79,8 +82,8 @@ public class QuizAttemptRepository : IQuizAttemptRepository
         return await _context.QuizAttempts
             .Where(a => a.Id == attemptId && !a.IsSettled)
             .ExecuteUpdateAsync(setters => setters
-            .SetProperty(a => a.IsSettled, true)
-            .SetProperty(a => a.SettledAt, DateTime.UtcNow), ct);
+                .SetProperty(a => a.IsSettled, true)
+                .SetProperty(a => a.SettledAt, DateTime.UtcNow), ct);
     }
 
     public async Task SaveChangesAsync()

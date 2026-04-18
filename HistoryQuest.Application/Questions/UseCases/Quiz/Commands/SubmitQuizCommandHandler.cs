@@ -42,41 +42,67 @@ public class SubmitQuizCommandHandler
             .SelectMany(x => x.Question.Options)
             .ToDictionary(o => o.Id, o => o.IsCorrect);
 
-        var answers = command.Answers.Select(a => AttemptAnswer.Create(
+        var answeredQuestionIds = attempt.Answers.Select(a => a.QuestionId).ToHashSet();
+
+        var incomingDistinct = command.Answers
+            .Where(a => !answeredQuestionIds.Contains(a.QuestionId))
+            .ToList();
+
+        var newAnswers = incomingDistinct.Select(a => AttemptAnswer.Create(
             attempt.Id,
             a.QuestionId,
             a.SelectedOptionId,
             optionMap.TryGetValue(a.SelectedOptionId, out var isCorrect) && isCorrect
-        )).ToList();
+            )).ToList();
 
-        var score = answers.Count(a => a.IsCorrect);
-        var totalQuestionCount = attempt.TotalQuestions;
-        var correctCount = score;
-        var wrongCount = Math.Max(totalQuestionCount - correctCount, 0);
+        await _attemptRepository.AddAnswersAsync(attempt.Id, newAnswers);
 
-        var completeAffected = await _attemptRepository.CompleteAttemptAsync(attempt.Id, score, answers);
+        var refreshed = await _attemptRepository.GetByIdAsync(attempt.Id)
+            ?? throw new NotFoundException("Attempt not found.");
+
+        var totalQuestionCount = refreshed.TotalQuestions;
+        var answeredCount = refreshed.Answers.Count;
+        var correctCount = refreshed.Answers.Count(a => a.IsCorrect);
+        var wrongCount = Math.Max(answeredCount - correctCount, 0);
+
+        if (answeredCount < totalQuestionCount)
+        {
+            return new SubmitQuizResponse
+            {
+                AttemptId = refreshed.Id,
+                Score = 0,
+                CreditDelta = 0,
+                TotalQuestions = totalQuestionCount,
+                AnsweredQuestions = answeredCount,
+                IsCompleted = false,
+            };
+        }
+
+        var completeAffected = await _attemptRepository.CompleteAttemptAsync(refreshed.Id, 0);
         if (completeAffected == 0)
             throw new BusinessRuleException("Quiz attempt already completed or not found.");
 
         var creditDelta = await _applyQuizSettlementCommand.ExecuteAsync(
-                                    quizId: command.QuizId,
-                                    studentId: command.StudentId,
-                                    attemptId: attempt.Id,
-                                    totalQuestionCount: totalQuestionCount,
-                                    correctCount: correctCount,
-                                    wrongCount: wrongCount
-                                );
+            quizId: command.QuizId,
+            studentId: command.StudentId,
+            attemptId: refreshed.Id,
+            totalQuestionCount: totalQuestionCount,
+            correctCount: correctCount,
+            wrongCount: totalQuestionCount - correctCount
+        );
 
-        await _attemptRepository.UpdateScoreAsync(attempt.Id, creditDelta);
-        await _attemptRepository.MarkSettledAsync(attempt.Id);
+        await _attemptRepository.UpdateScoreAsync(refreshed.Id, creditDelta);
+        await _attemptRepository.MarkSettledAsync(refreshed.Id);
 
 
         return new SubmitQuizResponse
         {
-            AttemptId = attempt.Id,
+            AttemptId = refreshed.Id,
             Score = creditDelta,
             CreditDelta = creditDelta,
-            TotalQuestions = attempt.TotalQuestions,
+            TotalQuestions = totalQuestionCount,
+            AnsweredQuestions = totalQuestionCount,
+            IsCompleted = true
         };
 
     }
@@ -86,6 +112,9 @@ public class SubmitQuizResponse
 {
     public Guid AttemptId { get; set; }
     public int Score { get; set; }
-    public int CreditDelta { get; set; } 
+    public int CreditDelta { get; set; }
     public int TotalQuestions { get; set; }
+
+    public int AnsweredQuestions { get; set; }
+    public bool IsCompleted { get; set; }
 }
