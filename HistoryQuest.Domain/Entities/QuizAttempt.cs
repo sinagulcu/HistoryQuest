@@ -64,4 +64,5 @@ public class QuizAttempt
         Status = AttemptStatus.Completed;
     }
 
+
 }

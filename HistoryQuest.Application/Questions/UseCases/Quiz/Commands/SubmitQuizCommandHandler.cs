@@ -38,9 +38,6 @@ public class SubmitQuizCommandHandler
         var attempt = await _attemptRepository.GetActiveAttemptAsync(command.QuizId, command.StudentId)
             ?? throw new BusinessRuleException("Active quiz not found. Quiz must be started");
 
-        if (attempt.IsCompleted)
-            throw new BusinessRuleException("This quiz try completed allready.");
-
         var optionMap = quiz.QuizQuestions
             .SelectMany(x => x.Question.Options)
             .ToDictionary(o => o.Id, o => o.IsCorrect);
@@ -53,13 +50,11 @@ public class SubmitQuizCommandHandler
         )).ToList();
 
         var score = answers.Count(a => a.IsCorrect);
-
         var totalQuestionCount = attempt.TotalQuestions;
         var correctCount = score;
         var wrongCount = Math.Max(totalQuestionCount - correctCount, 0);
 
         var completeAffected = await _attemptRepository.CompleteAttemptAsync(attempt.Id, score, answers);
-
         if (completeAffected == 0)
             throw new BusinessRuleException("Quiz attempt already completed or not found.");
 
@@ -73,7 +68,6 @@ public class SubmitQuizCommandHandler
                                 );
 
         await _attemptRepository.UpdateScoreAsync(attempt.Id, creditDelta);
-
         await _attemptRepository.MarkSettledAsync(attempt.Id);
 
 
